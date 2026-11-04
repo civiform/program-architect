@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 100" style="width: 170px; height: 100px;">
+  <!-- Text -->
+  <text x="15" y="42" font-family="'Source Sans 3', Georgia, serif" font-size="34" font-weight="bold" fill="#005ea2">Civi</text>
+  <text x="65" y="82" font-family="'Source Sans 3', Georgia, serif" font-size="34" font-weight="bold" fill="#005ea2">Form</text>
+  
+  <!-- Top-right bracket -->
+  <path d="M 75 22 L 150 22 L 150 52" stroke="#005ea2" stroke-width="4" fill="none" stroke-linejoin="miter" stroke-linecap="square"/>
+  
+  <!-- Bottom-left bracket -->
+  <path d="M 105 88 L 15 88 L 15 58" stroke="#005ea2" stroke-width="4" fill="none" stroke-linejoin="miter" stroke-linecap="square"/>
+</svg>
