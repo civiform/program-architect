@@ -26,6 +26,35 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 from validate_civiform_json import validate_multi_program_suite, validate_single_program
 
 SCREEN_PREFIX_RE = re.compile(r"^\s*(?:Screen|Step)\s+\d+\s*[:\-–—]\s*", re.IGNORECASE)
+DIGIT_TO_ALPHA_WORD = {
+    "0": "zero",
+    "1": "one",
+    "2": "two",
+    "3": "three",
+    "4": "four",
+    "5": "five",
+    "6": "six",
+    "7": "seven",
+    "8": "eight",
+    "9": "nine",
+}
+
+
+def sanitize_question_admin_name(raw_name: str) -> str:
+    """
+    Sanitizes a question Admin ID (`config.name`) so that digits are converted to alphabetic
+    words (`_p1_` -> `_pa_`, `_p2_` -> `_pb_`, `1` -> `one`, `2` -> `two`, etc.).
+    CiviForm's `QuestionDefinition.getQuestionNameKey()` strips all non-letter characters
+    (`[^a-zA-Z]`), so numeric differentiators like `_p1_` vs `_p2_` or `_1_` vs `_2_`
+    compile to the exact same Question Key and fail on import.
+    """
+    s = str(raw_name or "").lower()
+    s = re.sub(r"(^|_)p1(?=_|$)", r"\1pa", s)
+    s = re.sub(r"(^|_)p2(?=_|$)", r"\1pb", s)
+    s = re.sub(r"\d", lambda m: f"_{DIGIT_TO_ALPHA_WORD[m.group(0)]}_", s)
+    s = re.sub(r"[^a-z_]+", "_", s)
+    s = re.sub(r"_+", "_", s).strip("_")
+    return s or "cf_question"
 
 
 def make_localized(
@@ -59,10 +88,11 @@ def q_simple(
     """Constructs a standard CiviForm non-multioption QuestionDefinition."""
     vp = dict(validation_predicates) if validation_predicates is not None else {"type": q_type}
     vp["type"] = q_type
+    clean_admin_name = sanitize_question_admin_name(admin_name)
     return {
         "type": q_type,
         "config": {
-            "name": admin_name,
+            "name": clean_admin_name,
             "description": description,
             "questionText": make_localized(question_text, extra_question_translations),
             "questionHelpText": (
@@ -162,10 +192,11 @@ def q_multioption(
             }
         )
 
+    clean_admin_name = sanitize_question_admin_name(admin_name)
     return {
         "type": "multioption",
         "config": {
-            "name": admin_name,
+            "name": clean_admin_name,
             "description": description,
             "questionText": make_localized(question_text, extra_question_translations),
             "questionHelpText": (

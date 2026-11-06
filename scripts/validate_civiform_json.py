@@ -269,7 +269,13 @@ def validate_single_program(data: Dict[str, Any], file_label: str) -> List[Valid
     issues: List[ValidationIssue] = []
 
     # 1. Top-level container
-    allowed_top_keys = {"program", "questions", "duplicateQuestionHandlingOptions"}
+    allowed_top_keys = {
+        "program",
+        "questions",
+        "duplicateQuestionHandlingOptions",
+        "sharedQuestionIds",
+        "sharedQuestionNames",
+    }
     extra_keys = set(data.keys()) - allowed_top_keys
     if extra_keys:
         issues.append(
@@ -358,6 +364,7 @@ def validate_single_program(data: Dict[str, Any], file_label: str) -> List[Valid
     q_map: Dict[int, Dict[str, Any]] = {}
     q_ids: Set[int] = set()
     q_names: Set[str] = set()
+    q_alpha_keys: Dict[str, str] = {}
     has_pai_applicant_name = False
 
     for idx, q in enumerate(questions):
@@ -393,6 +400,27 @@ def validate_single_program(data: Dict[str, Any], file_label: str) -> List[Valid
             issues.append(ValidationIssue("ERROR", file_label, f"{q_path}.config.name", f"Duplicate question config.name '{q_name}'."))
         else:
             q_names.add(q_name)
+            alpha_key = re.sub(r"[^a-zA-Z]", "", q_name).lower()
+            if not alpha_key:
+                issues.append(
+                    ValidationIssue(
+                        "ERROR",
+                        file_label,
+                        f"{q_path}.config.name",
+                        f"Question config.name '{q_name}' must contain at least one letter (CiviForm strips non-letters to form the Question Key).",
+                    )
+                )
+            elif alpha_key in q_alpha_keys:
+                issues.append(
+                    ValidationIssue(
+                        "ERROR",
+                        file_label,
+                        f"{q_path}.config.name",
+                        f"CiviForm Question Key collision: '{q_name}' and '{q_alpha_keys[alpha_key]}' both compile to Question Key '{alpha_key}' when non-letter characters are removed. Use alphabetic words ('one', 'two', 'pa', 'pb') instead of digits ('1', '2', 'p1', 'p2') to differentiate question Admin IDs.",
+                    )
+                )
+            else:
+                q_alpha_keys[alpha_key] = q_name
 
         pai_tags = config.get("primaryApplicantInfoTags", [])
         if "APPLICANT_NAME" in pai_tags and config.get("universal") is True:
@@ -718,8 +746,9 @@ def validate_multi_program_suite(loaded_programs: List[Tuple[str, Dict[str, Any]
     if len(loaded_programs) < 2:
         return issues
 
-    # Track question definitions across files by config.name
+    # Track question definitions across files by config.name and by CiviForm Alphabetic Question Key
     by_name: Dict[str, List[Tuple[str, int, str]]] = {}
+    by_alpha_key: Dict[str, Set[str]] = {}
     pai_name_questions: Set[str] = set()
 
     for file_label, data in loaded_programs:
@@ -729,8 +758,22 @@ def validate_multi_program_suite(loaded_programs: List[Tuple[str, Dict[str, Any]
             q_id = cfg.get("id", -1)
             q_type = q.get("type", "")
             by_name.setdefault(q_name, []).append((file_label, q_id, q_type))
+            alpha_key = re.sub(r"[^a-zA-Z]", "", q_name).lower()
+            if alpha_key:
+                by_alpha_key.setdefault(alpha_key, set()).add(q_name)
             if "APPLICANT_NAME" in cfg.get("primaryApplicantInfoTags", []):
                 pai_name_questions.add(q_name)
+
+    for alpha_key, distinct_names in by_alpha_key.items():
+        if len(distinct_names) > 1:
+            issues.append(
+                ValidationIssue(
+                    "ERROR",
+                    "SUITE",
+                    f"question_key.{alpha_key}",
+                    f"CiviForm Question Key collision across suite: Admin IDs {sorted(distinct_names)} all compile to the same alphabetic Question Key '{alpha_key}' (because CiviForm strips non-letter characters including digits 0-9 and underscores). Either harmonize them into a single shared question with an identical Admin ID ('<prefix>_shared_...'), or use alphabetic scopes ('_pa_' / '_pb_') instead of numeric ('_p1_' / '_p2_').",
+                )
+            )
 
     if len(pai_name_questions) > 1:
         issues.append(

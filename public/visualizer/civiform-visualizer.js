@@ -1149,6 +1149,40 @@
         const isEligibilityQuestion = eligQuestionIds.has(String(qd.id)) || (eligInfo && String(eligInfo.questionId) === String(qd.id));
         const isVisibilityTriggerQuestion = visibilityTriggerQIds.has(String(qd.id));
         const isEnumeratorQuestion = (q.type === 'enumerator');
+        const isUniversalQuestion = Boolean(
+          q.config?.universal ||
+          q.universal ||
+          (Array.isArray(q.config?.questionTagList) && q.config.questionTagList.includes('UNIVERSAL')) ||
+          (Array.isArray(q.questionTagList) && q.questionTagList.includes('UNIVERSAL'))
+        );
+        const isSharedQuestion = Boolean(
+          q.config?.isSharedQuestion ||
+          q.isSharedQuestion ||
+          q.config?.isShared ||
+          q.isShared ||
+          q.config?.shared ||
+          q.shared ||
+          Boolean(q.sharedKey) ||
+          Boolean(q.config?.sharedKey) ||
+          (Array.isArray(q.config?.questionTagList) && (q.config.questionTagList.includes('SHARED') || q.config.questionTagList.includes('SHARED_QUESTION'))) ||
+          (Array.isArray(q.questionTagList) && (q.questionTagList.includes('SHARED') || q.questionTagList.includes('SHARED_QUESTION'))) ||
+          /_shared_/i.test(String(q.id || '')) ||
+          /_shared_/i.test(String(q.config?.name || '')) ||
+          /_shared_/i.test(String(q.name || '')) ||
+          /_shared_/i.test(String(qd.id || '')) ||
+          (Array.isArray(state.formData?.sharedQuestionIds) && (
+            state.formData.sharedQuestionIds.includes(qd.id) ||
+            state.formData.sharedQuestionIds.includes(String(qd.id)) ||
+            state.formData.sharedQuestionIds.includes(Number(qd.id)) ||
+            (q.config?.id != null && state.formData.sharedQuestionIds.includes(q.config.id)) ||
+            (q.id != null && state.formData.sharedQuestionIds.includes(q.id))
+          )) ||
+          (Array.isArray(state.formData?.sharedQuestionNames) && (
+            (q.config?.name && state.formData.sharedQuestionNames.includes(q.config.name)) ||
+            (q.name && state.formData.sharedQuestionNames.includes(q.name)) ||
+            state.formData.sharedQuestionNames.includes(String(qd.id))
+          ))
+        );
 
         let typeClass = 'q-type-tag';
         if (q.type === 'currency' || q.type === 'date') typeClass += ' q-type-tag--currency';
@@ -1185,10 +1219,14 @@
 
         let chipModClass = '';
 
-        const hasMeta = isEnumeratorQuestion || isVisibilityTriggerQuestion || isEligibilityQuestion || !qd.optional;
+        const hasMeta = isUniversalQuestion || isSharedQuestion || isEnumeratorQuestion || isVisibilityTriggerQuestion || isEligibilityQuestion || !qd.optional;
+        const universalIconSvg = `<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true" style="flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.24 18z"/></svg>`;
+        const sharedIconSvg = `<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true" style="flex-shrink:0;"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>`;
         const metaHTML = hasMeta ? `
             <div class="question-chip__top">
               <div class="question-chip__meta">
+                ${isUniversalQuestion ? `<span class="q-universal-pill" title="CiviForm Universal Question">${universalIconSvg}UNIVERSAL QUESTION</span>` : ''}
+                ${isSharedQuestion ? `<span class="q-shared-pill" title="Shared question across programs">${sharedIconSvg}SHARED QUESTION</span>` : ''}
                 ${isEnumeratorQuestion ? `<span class="q-enumerator-pill">ENUMERATOR</span>` : ''}
                 ${isVisibilityTriggerQuestion ? `<span class="q-visibility-pill">CONTROLS VISIBILITY</span>` : ''}
                 ${isEligibilityQuestion ? `<span class="q-eligibility-pill">CONTROLS ELIGIBILITY</span>` : ''}
@@ -1677,14 +1715,55 @@
         det.addEventListener('toggle', () => requestAnimationFrame(drawSvgConnectors));
       });
 
+      observeFlowchartLayoutChanges();
       renderOutlineList();
-      requestAnimationFrame(drawSvgConnectors);
+      scheduleConnectorRedraw();
+    }
+
+    let flowchartResizeObserver = null;
+    let connectorRafId = null;
+
+    function scheduleConnectorRedraw() {
+      if (connectorRafId) cancelAnimationFrame(connectorRafId);
+      connectorRafId = requestAnimationFrame(() => {
+        connectorRafId = null;
+        drawSvgConnectors();
+      });
+      setTimeout(drawSvgConnectors, 60);
+      setTimeout(drawSvgConnectors, 220);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+          requestAnimationFrame(drawSvgConnectors);
+        });
+      }
+    }
+
+    function observeFlowchartLayoutChanges() {
+      if (typeof ResizeObserver === 'undefined') return;
+      if (!flowchartResizeObserver) {
+        flowchartResizeObserver = new ResizeObserver(() => {
+          if (connectorRafId) cancelAnimationFrame(connectorRafId);
+          connectorRafId = requestAnimationFrame(() => {
+            connectorRafId = null;
+            drawSvgConnectors();
+          });
+        });
+      }
+      flowchartResizeObserver.disconnect();
+      const viewport = document.getElementById('flowchart-viewport');
+      if (viewport) flowchartResizeObserver.observe(viewport);
+      document.querySelectorAll('.flow-row__primary, .cf-intro-card, .decision-gate, .branch-row').forEach(el => {
+        flowchartResizeObserver.observe(el);
+      });
     }
 
     function drawSvgConnectors() {
       const svg = document.getElementById('flowchart-svg');
       const viewport = document.getElementById('flowchart-viewport');
       if (!svg || !viewport) return;
+
+      const initialVpRect = viewport.getBoundingClientRect();
+      if (initialVpRect.width === 0 || initialVpRect.height === 0) return;
 
       const defs = svg.querySelector('defs');
       svg.innerHTML = '';
@@ -1712,7 +1791,14 @@
         });
       });
 
+      // Force synchronous layout flush after marginTop adjustments before reading coordinates
+      void viewport.offsetHeight;
+
       const vpRect = viewport.getBoundingClientRect();
+      const svgW = Math.max(Math.ceil(viewport.scrollWidth), Math.ceil(vpRect.width / scale));
+      const svgH = Math.max(Math.ceil(viewport.scrollHeight), Math.ceil(vpRect.height / scale));
+      svg.setAttribute('width', String(svgW));
+      svg.setAttribute('height', String(svgH));
 
       function getCoords(el) {
         if (!el) return null;

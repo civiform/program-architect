@@ -604,7 +604,6 @@
       width: 100%;
       max-width: 100%;
       transform-origin: top left;
-      transition: transform 0.2s ease;
       order: 2;
       padding-top: 0;
     }
@@ -667,7 +666,6 @@
 
     .flow-side-item {
       width: 100%;
-      transition: margin-top 0.15s ease;
     }
 
     .conditional-side-item {
@@ -1406,6 +1404,39 @@
       border: 1px solid #FFC642;
       padding: 0.08rem 0.42rem;
       border-radius: 3px;
+    }
+
+    .q-universal-pill {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #164e63;
+      color: #ffffff;
+      border: none;
+      padding: 0.1rem 0.45rem;
+      border-radius: 3px;
+      line-height: 1.2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .q-shared-pill {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: rgba(22, 78, 99, 0.05);
+      color: #164e63;
+      border: 1.5px solid #164e63;
+      padding: 0.06rem 0.42rem;
+      border-radius: 3px;
+      line-height: 1.2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      box-sizing: border-box;
     }
 
     .q-eligibility-pill {

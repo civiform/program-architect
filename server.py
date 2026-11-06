@@ -1,127 +1,130 @@
 #!/usr/bin/env python3
-"""Local HTTP & API server for the CiviForm Program Architect UI.
-
-Serves static files from public/ and provides:
-  - GET  /api/health
-  - GET  /api/fetch-url?url=<encoded_url>
-  - POST /api/validate (runs validate_civiform_json.py)
-  - POST /api/gemini (proxies LLM requests using user key or environment variables)
-  - GET  /sample-benefit-form.pdf (built-in sample PDF for URL testing)
-"""
+"""HTTP server for CiviForm Program Architect UI + JSON Validator & LLM API Proxy."""
 
 import base64
+from html.parser import HTMLParser
 import http.server
-import importlib
 import json
 import os
-from pathlib import Path
 import re
+import shutil
 import socket
 import socketserver
+import ssl
+import subprocess
 import sys
 import urllib.error
 import urllib.parse
 import urllib.request
 
-from bs4 import BeautifulSoup
+REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+PUBLIC_DIR = os.path.join(REPO_ROOT, "public")
+SCRIPTS_DIR = os.path.join(REPO_ROOT, "scripts")
 
-BASE_DIR = Path(__file__).resolve().parent
-PROTOTYPES_DIR = BASE_DIR / "public"
-SKILL_SCRIPTS_DIR = BASE_DIR / "scripts"
-sys.path.insert(0, str(SKILL_SCRIPTS_DIR))
-
-import validate_civiform_json  # noqa: E402
+sys.path.insert(0, SCRIPTS_DIR)
+import validate_civiform_json
 
 
-def get_local_api_key(provider: str = "gemini") -> str:
-  provider = (provider or "gemini").strip().lower()
-  if provider == "anthropic":
-    return (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
-  if provider == "openai":
-    return (os.environ.get("OPENAI_API_KEY") or "").strip()
-
-  env_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-  if env_key:
-    return env_key.strip()
-  key_path = Path.home() / "google_api_key"
-  if key_path.exists():
-    try:
-      return key_path.read_text(encoding="utf-8").strip()
-    except OSError:
-      pass
+def _extract_pdf_text_with_pdftotext(raw_bytes: bytes) -> str:
+  """Extracts layout-preserved text from PDF bytes using pdftotext if available."""
+  pdftotext_bin = shutil.which("pdftotext") or (
+      "/usr/bin/pdftotext" if os.path.exists("/usr/bin/pdftotext") else None
+  )
+  if not pdftotext_bin or not raw_bytes:
+    return ""
+  try:
+    proc = subprocess.run(
+        [pdftotext_bin, "-layout", "-", "-"],
+        input=raw_bytes,
+        capture_output=True,
+        timeout=15,
+    )
+    if proc.returncode == 0 and proc.stdout:
+      return proc.stdout.decode("utf-8", errors="replace").strip()
+  except Exception:
+    pass
   return ""
 
 
-def build_sample_pdf_bytes() -> bytes:
-  """Builds a valid multi-section PDF document for testing PDF URL extraction."""
-  lines = [
-      "MUNICIPAL RESIDENT ASSISTANCE & WORKFORCE APPLICATION",
-      "Instructions: Complete all sections below to apply for resident assistance and career training.",
-      "Section 1: Applicant Identity and Contact Information",
-      "1. First Name: ______________________",
-      "2. Middle Name: _____________________",
-      "3. Last Name: _______________________",
-      "4. Date of Birth (Must be 18 years or older): ____/____/______",
-      "5. Residential Street Address: _______________________________",
-      "6. City: _________________ State: _____ Zip Code: __________",
-      "7. Email Address: ___________________________",
-      "8. Primary Phone Number: ____________________",
-      "Section 2: Residency and Household Eligibility",
-      "9. Do you currently reside within the municipality? ( ) Yes  ( ) No",
-      "10. Number of people in household: ________",
-      "11. Total Gross Annual Household Income ($): $______________",
-      "12. Are you currently self-employed or operating a sole proprietorship? ( ) Yes  ( ) No",
-      "Section 3: Conditional Self-Employment Details (Complete only if Yes to Question 12)",
-      "13. If yes, describe your self-employment business or trade: ________________________",
-      "14. Average monthly net self-employment earnings ($): $______________",
-      "Section 4: Supporting Documentation",
-      "15. Please upload a copy of your government-issued photo ID and proof of residency.",
-      "For Office Use Only: Reviewer ID _______ Date Received _______ Approved ( ) Denied ( )",
-  ]
+class _SimpleHTMLTextExtractor(HTMLParser):
+  """Extracts visible text, title, headings, and form field labels from HTML."""
 
-  stream_cmds = ["BT", "/F1 11 Tf", "50 750 Td", "18 TL"]
-  for line in lines:
-    escaped = (
-        line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-    )
-    stream_cmds.append(f"({escaped}) Tj T*")
-  stream_cmds.append("ET")
-  stream_data = "\n".join(stream_cmds).encode("latin-1")
+  def __init__(self):
+    super().__init__()
+    self._skip_depth = 0
+    self._in_title = False
+    self._in_heading = False
+    self._in_label = False
+    self.title_parts = []
+    self.headings = []
+    self.labels = []
+    self.text_chunks = []
+    self._current_buf = []
 
-  objects = [
-      b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
-      b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
-      (
-          b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-          b"/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n"
-      ),
-      (
-          f"4 0 obj\n<< /Length {len(stream_data)} >>\nstream\n".encode("latin-1")
-          + stream_data
-          + b"\nendstream\nendobj\n"
-      ),
-      b"5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
-  ]
+  def handle_starttag(self, tag, attrs):
+    t = tag.lower()
+    if t in ("script", "style", "noscript", "svg", "head"):
+      if t != "head":
+        self._skip_depth += 1
+      return
+    if self._skip_depth > 0:
+      return
+    if t == "title":
+      self._in_title = True
+      self._current_buf = []
+    elif t in ("h1", "h2", "h3", "h4", "legend"):
+      self._in_heading = True
+      self._current_buf = []
+    elif t == "label":
+      self._in_label = True
+      self._current_buf = []
+    elif t == "input":
+      attr_dict = dict(attrs)
+      placeholder = (attr_dict.get("placeholder") or "").strip()
+      aria_label = (attr_dict.get("aria-label") or "").strip()
+      name = (attr_dict.get("name") or "").strip()
+      label_cand = aria_label or placeholder or name
+      if label_cand and len(label_cand) < 120:
+        self.labels.append(label_cand)
 
-  out = bytearray(b"%PDF-1.4\n")
-  offsets = [0]
-  for obj in objects:
-    offsets.append(len(out))
-    out.extend(obj)
-  xref_pos = len(out)
-  out.extend(f"xref\n0 {len(offsets)}\n".encode("latin-1"))
-  out.extend(b"0000000000 65535 f \n")
-  for off in offsets[1:]:
-    out.extend(f"{off:010d} 00000 n \n".encode("latin-1"))
-  out.extend(
-      f"trailer\n<< /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n".encode(
-          "latin-1"
-      )
-  )
-  return bytes(out)
+  def handle_endtag(self, tag):
+    t = tag.lower()
+    if t in ("script", "style", "noscript", "svg"):
+      self._skip_depth = max(0, self._skip_depth - 1)
+      return
+    if self._skip_depth > 0:
+      return
+    if t == "title" and self._in_title:
+      self._in_title = False
+      txt = " ".join("".join(self._current_buf).split())
+      if txt:
+        self.title_parts.append(txt)
+    elif t in ("h1", "h2", "h3", "h4", "legend") and self._in_heading:
+      self._in_heading = False
+      txt = " ".join("".join(self._current_buf).split())
+      if txt:
+        self.headings.append(txt)
+    elif t == "label" and self._in_label:
+      self._in_label = False
+      txt = " ".join("".join(self._current_buf).split())
+      if txt:
+        self.labels.append(txt)
+    elif t in ("p", "li", "div", "tr", "br", "section", "article"):
+      self.text_chunks.append("\n")
+
+  def handle_data(self, data):
+    if self._in_title or self._in_heading or self._in_label:
+      self._current_buf.append(data)
+    if self._skip_depth == 0:
+      cleaned = " ".join(data.split())
+      if cleaned:
+        self.text_chunks.append(cleaned + " ")
 
 
-class ReusableTCPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+classReusableTCPServer = socketserver.ThreadingTCPServer
+
+
+class DualStackServer(classReusableTCPServer):
   allow_reuse_address = True
   address_family = socket.AF_INET6
 
@@ -130,346 +133,493 @@ class ReusableTCPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     super().server_bind()
 
 
-class ArchitectRequestHandler(http.server.SimpleHTTPRequestHandler):
-  """HTTP handler for static files and Program Architect API routes."""
+class ArchitectHandler(http.server.SimpleHTTPRequestHandler):
 
   def __init__(self, *args, **kwargs):
-    super().__init__(*args, directory=str(PROTOTYPES_DIR), **kwargs)
+    super().__init__(*args, directory=PUBLIC_DIR, **kwargs)
 
   def end_headers(self):
-    self.send_header(
-        "Cache-Control", "no-store, no-cache, must-revalidate, max-age=0"
-    )
-    self.send_header("Pragma", "no-cache")
-    self.send_header("Expires", "0")
-    super().end_headers()
-
-  def send_json(self, status_code: int, payload: dict):
-    body = json.dumps(payload).encode("utf-8")
-    self.send_response(status_code)
-    self.send_header("Content-Type", "application/json; charset=utf-8")
-    self.send_header("Content-Length", str(len(body)))
     self.send_header("Access-Control-Allow-Origin", "*")
     self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
     self.send_header("Access-Control-Allow-Headers", "Content-Type")
-    self.end_headers()
-    self.wfile.write(body)
+    super().end_headers()
 
   def do_OPTIONS(self):
     self.send_response(204)
-    self.send_header("Access-Control-Allow-Origin", "*")
-    self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-    self.send_header("Access-Control-Allow-Headers", "Content-Type")
     self.end_headers()
 
   def do_GET(self):
-    parsed = urllib.parse.urlparse(self.path)
-    if parsed.path == "/api/health":
-      has_key = bool(get_local_api_key("gemini"))
-      self.send_json(
-          200,
-          {
-              "ok": True,
-              "hasLocalApiKey": has_key,
-              "authMethod": "api-key" if has_key else "none",
-          },
-      )
-      return
+    parsed = urllib.parse.urlsplit(self.path)
 
-    if parsed.path == "/sample-benefit-form.pdf":
-      pdf_bytes = build_sample_pdf_bytes()
+    if parsed.path == "/api/health":
       self.send_response(200)
-      self.send_header("Content-Type", "application/pdf")
-      self.send_header("Content-Length", str(len(pdf_bytes)))
-      self.send_header("Access-Control-Allow-Origin", "*")
+      self.send_header("Content-Type", "application/json")
       self.end_headers()
-      self.wfile.write(pdf_bytes)
+      self.wfile.write(
+          json.dumps(
+              {"status": "ok", "service": "civiform-program-architect"}
+          ).encode("utf-8")
+      )
       return
 
     if parsed.path == "/api/fetch-url":
       qs = urllib.parse.parse_qs(parsed.query)
       target_url = (qs.get("url") or [""])[0].strip()
-      if not target_url:
-        self.send_json(400, {"ok": False, "error": "Missing url parameter."})
+      label_hint = ""
+      # Support lines where user typed "Program Name: https://..."
+      url_match = re.search(r"(https?://\S+)", target_url, re.IGNORECASE)
+      if url_match:
+        prefix_part = target_url[: url_match.start()].strip().rstrip(":-–—")
+        if prefix_part:
+          label_hint = prefix_part.strip()
+        target_url = url_match.group(1).strip()
+      elif target_url and not target_url.lower().startswith(
+          ("http://", "https://")
+      ):
+        if "." in target_url and " " not in target_url:
+          target_url = "https://" + target_url
+
+      if not target_url or not target_url.lower().startswith(
+          ("http://", "https://")
+      ):
+        self._send_json(
+            400,
+            {"ok": False, "error": "Invalid or missing http(s) URL"},
+        )
         return
-      self.handle_fetch_url(target_url)
+
+      try:
+        ctx = ssl.create_default_context()
+        req = urllib.request.Request(
+            target_url,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 "
+                    "CiviFormProgramArchitect/2.0"
+                ),
+                "Accept": (
+                    "text/html,application/xhtml+xml,application/pdf,"
+                    "application/xml;q=0.9,*/*;q=0.8"
+                ),
+            },
+        )
+        with urllib.request.urlopen(req, timeout=20, context=ctx) as resp:
+          content_type = (
+              resp.headers.get("Content-Type") or ""
+          ).lower().strip()
+          content_disp = resp.headers.get("Content-Disposition") or ""
+          raw_bytes = resp.read(20 * 1024 * 1024)  # 20 MB max
+
+        is_pdf = (
+            "application/pdf" in content_type
+            or target_url.lower().split("?")[0].endswith(".pdf")
+            or raw_bytes[:5] == b"%PDF-"
+        )
+
+        if is_pdf:
+          b64_data = base64.b64encode(raw_bytes).decode("ascii")
+          fname = (
+              target_url.split("?")[0].rstrip("/").split("/")[-1]
+              or "remote.pdf"
+          )
+          cd_match = re.search(
+              r'filename\*?=["\']?(?:UTF-8\'\')?([^"\';\r\n]+)',
+              content_disp,
+              re.IGNORECASE,
+          )
+          if cd_match:
+            fname = urllib.parse.unquote(cd_match.group(1).strip())
+          if not fname.lower().endswith(".pdf"):
+            fname += ".pdf"
+
+          extracted_pdf_text = _extract_pdf_text_with_pdftotext(raw_bytes)
+          self._send_json(
+              200,
+              {
+                  "ok": True,
+                  "url": target_url,
+                  "labelHint": label_hint,
+                  "kind": "pdf",
+                  "contentType": "application/pdf",
+                  "filename": fname,
+                  "size": len(raw_bytes),
+                  "base64": b64_data,
+                  "extractedText": extracted_pdf_text,
+              },
+          )
+          return
+
+        html_text = raw_bytes.decode("utf-8", errors="replace")
+        extractor = _SimpleHTMLTextExtractor()
+        extractor.feed(html_text)
+        full_text = re.sub(
+            r"\n{3,}", "\n\n", "".join(extractor.text_chunks)
+        ).strip()
+        title = extractor.title_parts[0] if extractor.title_parts else ""
+        if not title and extractor.headings:
+          title = extractor.headings[0]
+
+        self._send_json(
+            200,
+            {
+                "ok": True,
+                "url": target_url,
+                "labelHint": label_hint,
+                "kind": "webpage",
+                "contentType": content_type or "text/html",
+                "title": title[:200],
+                "headings": extractor.headings[:40],
+                "fields": list(dict.fromkeys(extractor.labels))[:80],
+                "text": full_text[:25000],
+            },
+        )
+      except Exception as e:
+        self._send_json(
+            200,
+            {
+                "ok": False,
+                "url": target_url,
+                "error": str(e),
+            },
+        )
       return
 
-    super().do_GET()
+    return super().do_GET()
 
   def do_POST(self):
-    parsed = urllib.parse.urlparse(self.path)
-    content_len = int(self.headers.get("Content-Length", "0") or "0")
-    raw_body = self.rfile.read(content_len) if content_len > 0 else b"{}"
-    try:
-      data = json.loads(raw_body.decode("utf-8"))
-    except Exception as e:
-      self.send_json(400, {"ok": False, "error": f"Invalid JSON body: {e}"})
+    parsed = urllib.parse.urlsplit(self.path)
+    if parsed.path == "/api/validate":
+      content_len = int(self.headers.get("Content-Length", 0))
+      raw_body = self.rfile.read(content_len).decode("utf-8")
+      try:
+        payload = json.loads(raw_body)
+        if (
+            isinstance(payload, dict)
+            and "programs" in payload
+            and isinstance(payload["programs"], list)
+        ):
+          programs_list = payload["programs"]
+          is_valid, messages, report = (
+              validate_civiform_json.validate_multi_program_suite(programs_list)
+          )
+          self._send_json(
+              200,
+              {
+                  "valid": is_valid,
+                  "messages": messages,
+                  "report": report,
+                  "programCount": len(programs_list),
+              },
+          )
+        else:
+          program_data = (
+              payload.get("programData", payload)
+              if isinstance(payload, dict) and "programData" in payload
+              else payload
+          )
+          is_valid, messages, report = (
+              validate_civiform_json.validate_program_migration_Wrapper(
+                  program_data
+              )
+          )
+          self._send_json(
+              200,
+              {
+                  "valid": is_valid,
+                  "messages": messages,
+                  "report": report,
+                  "programCount": 1,
+              },
+          )
+      except Exception as e:
+        self._send_json(
+            400,
+            {
+                "valid": False,
+                "messages": [f"Server validation exception: {str(e)}"],
+                "report": f"Error: {str(e)}",
+            },
+        )
       return
 
-    if parsed.path == "/api/validate":
-      self.handle_validate(data)
+    if parsed.path == "/api/extract-pdf-text":
+      content_len = int(self.headers.get("Content-Length", 0))
+      raw_body = self.rfile.read(content_len).decode("utf-8")
+      try:
+        req_json = json.loads(raw_body)
+        b64_str = (req_json.get("base64") or "").strip()
+        if not b64_str:
+          self._send_json(400, {"ok": False, "error": "Missing base64 data"})
+          return
+        raw_bytes = base64.b64decode(b64_str)
+        extracted_text = _extract_pdf_text_with_pdftotext(raw_bytes)
+        self._send_json(
+            200,
+            {
+                "ok": True,
+                "extractedText": extracted_text,
+            },
+        )
+      except Exception as e:
+        self._send_json(200, {"ok": False, "error": str(e)})
       return
 
     if parsed.path == "/api/gemini":
-      self.handle_gemini_proxy(data)
-      return
+      content_len = int(self.headers.get("Content-Length", 0))
+      raw_body = self.rfile.read(content_len).decode("utf-8")
+      try:
+        req_json = json.loads(raw_body)
+        provider = (req_json.get("provider") or "gemini").strip().lower()
+        model = (req_json.get("model") or "gemini-2.5-flash").strip()
+        api_key = (req_json.get("apiKey") or "").strip()
+        gemini_payload = req_json.get("payload") or {}
 
-    self.send_json(404, {"ok": False, "error": "Unknown API endpoint."})
+        ctx = ssl.create_default_context()
 
-  def handle_fetch_url(self, target_url: str):
-    if target_url.endswith("/sample-benefit-form.pdf") or target_url == "sample-benefit-form.pdf":
-      pdf_bytes = build_sample_pdf_bytes()
-      self.send_json(
-          200,
-          {
-              "ok": True,
-              "kind": "pdf",
-              "url": target_url,
-              "filename": "sample-benefit-form.pdf",
-              "base64": base64.b64encode(pdf_bytes).decode("ascii"),
-          },
-      )
-      return
+        # 1. Anthropic Claude Proxy
+        if provider == "anthropic" or model.startswith("claude-"):
+          effective_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
+          if not effective_key:
+            self._send_json(
+                400,
+                {
+                    "ok": False,
+                    "error": (
+                        f"Missing Anthropic API key for {model}. Provide an API"
+                        " key in Step 1 or set ANTHROPIC_API_KEY."
+                    ),
+                },
+            )
+            return
+          if isinstance(gemini_payload, dict):
+            if int(gemini_payload.get("max_tokens") or 0) < 16384:
+              gemini_payload["max_tokens"] = 16384
+            # Strip heavy inline base64 PDF blocks if extracted text is already rich
+            msgs = gemini_payload.get("messages")
+            if isinstance(msgs, list):
+              total_txt = 0
+              for msg in msgs:
+                if isinstance(msg, dict) and isinstance(
+                    msg.get("content"), list
+                ):
+                  for blk in msg["content"]:
+                    if isinstance(blk, dict) and blk.get("type") == "text":
+                      total_txt += len(blk.get("text") or "")
+              if total_txt >= 2500:
+                for msg in msgs:
+                  if isinstance(msg, dict) and isinstance(
+                      msg.get("content"), list
+                  ):
+                    msg["content"] = [
+                        blk
+                        for blk in msg["content"]
+                        if not (
+                            isinstance(blk, dict)
+                            and blk.get("type") == "document"
+                        )
+                    ]
+          req = urllib.request.Request(
+              "https://api.anthropic.com/v1/messages",
+              data=json.dumps(gemini_payload).encode("utf-8"),
+              headers={
+                  "Content-Type": "application/json",
+                  "x-api-key": effective_key,
+                  "anthropic-version": "2023-06-01",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req, timeout=180, context=ctx) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+          self._send_json(
+              200,
+              {"ok": True, "modelUsed": model, "response": resp_data},
+          )
+          return
 
-    if not re.match(r"^https?://", target_url, re.I):
-      target_url = "https://" + target_url
+        # 2. OpenAI Proxy
+        if (
+            provider == "openai"
+            or model.startswith("gpt-")
+            or model.startswith("o3")
+            or model.startswith("o4")
+        ):
+          effective_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+          if not effective_key:
+            self._send_json(
+                400,
+                {
+                    "ok": False,
+                    "error": (
+                        f"Missing OpenAI API key for {model}. Provide an API"
+                        " key in Step 1 or set OPENAI_API_KEY."
+                    ),
+                },
+            )
+            return
+          if isinstance(gemini_payload, dict):
+            is_reasoning_model = (
+                model.startswith("o3")
+                or model.startswith("o4")
+                or model.startswith("gpt-5")
+            )
+            if is_reasoning_model:
+              gemini_payload.pop("temperature", None)
+              gemini_payload.pop("max_tokens", None)
+              gemini_payload["max_completion_tokens"] = 16384
+              gemini_payload["reasoning_effort"] = "low"
+            elif "max_tokens" not in gemini_payload:
+              gemini_payload["max_tokens"] = 16384
+          req = urllib.request.Request(
+              "https://api.openai.com/v1/chat/completions",
+              data=json.dumps(gemini_payload).encode("utf-8"),
+              headers={
+                  "Content-Type": "application/json",
+                  "Authorization": f"Bearer {effective_key}",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req, timeout=180, context=ctx) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+          self._send_json(
+              200,
+              {"ok": True, "modelUsed": model, "response": resp_data},
+          )
+          return
 
-    try:
-      req = urllib.request.Request(
-          target_url,
-          headers={
-              "User-Agent": (
-                  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-              ),
-              "Accept": (
-                  "application/pdf,text/html,application/xhtml+xml,text/plain,*/*"
-              ),
-          },
-      )
-      with urllib.request.urlopen(req, timeout=15) as resp:
-        content_type = (resp.headers.get("Content-Type") or "").lower()
-        raw_bytes = resp.read(15 * 1024 * 1024)  # Up to 15 MB
-    except Exception as e:
-      self.send_json(
-          200,
-          {
-              "ok": False,
-              "error": f"Could not fetch URL ({e}).",
-              "url": target_url,
-          },
-      )
-      return
-
-    is_pdf = (
-        "application/pdf" in content_type
-        or target_url.lower().split("?")[0].endswith(".pdf")
-        or raw_bytes.startswith(b"%PDF-")
-    )
-    if is_pdf:
-      filename = target_url.split("?")[0].rstrip("/").split("/")[-1] or "remote-document.pdf"
-      if not filename.lower().endswith(".pdf"):
-        filename += ".pdf"
-      self.send_json(
-          200,
-          {
-              "ok": True,
-              "kind": "pdf",
-              "url": target_url,
-              "filename": filename,
-              "base64": base64.b64encode(raw_bytes).decode("ascii"),
-          },
-      )
-      return
-
-    # Parse HTML or plain text
-    html_text = raw_body_to_text(raw_bytes)
-    soup = BeautifulSoup(html_text, "html.parser")
-
-    # Discover linked PDFs / CivicPlus DocumentCenter / DocAccess documents before decomposing
-    pdf_links = []
-    seen_pdf_urls = set()
-    for a_tag in soup.find_all("a", href=True):
-      href = (a_tag.get("href") or "").strip()
-      if not href or href.startswith("#") or href.lower().startswith("javascript:"):
-        continue
-      full_url = urllib.parse.urljoin(target_url, href)
-      if re.search(r"(\.pdf(?:$|[?#])|/DocumentCenter/View/|/Archive\.aspx\?ADID=|docaccess)", full_url, re.I):
-        if full_url not in seen_pdf_urls:
-          seen_pdf_urls.add(full_url)
-          link_text = a_tag.get_text(" ", strip=True) or full_url.split("/")[-1]
-          pdf_links.append({"title": link_text[:140], "url": full_url})
-
-    for tag in soup(["script", "style", "noscript", "svg", "nav", "footer"]):
-      tag.decompose()
-
-    title = ""
-    if soup.title and soup.title.string:
-      title = soup.title.string.strip()
-    if not title:
-      h1 = soup.find("h1")
-      if h1:
-        title = h1.get_text(" ", strip=True)
-
-    headings = []
-    for h in soup.find_all(["h1", "h2", "h3"]):
-      ht = h.get_text(" ", strip=True)
-      if ht and len(ht) < 140 and ht not in headings:
-        headings.append(ht)
-
-    fields = []
-    for label in soup.find_all("label"):
-      lt = label.get_text(" ", strip=True)
-      if lt and 2 <= len(lt) <= 160:
-        fields.append(lt)
-
-    lines = [
-        line.strip()
-        for line in soup.get_text("\n").splitlines()
-        if line.strip()
-    ]
-    clean_text = "\n".join(lines[:400])
-
-    has_docaccess_hash = "#docaccess-" in target_url.lower()
-    is_directory_page = bool(
-        has_docaccess_hash
-        or (len(pdf_links) >= 2 and len(fields) == 0)
-        or re.search(r"/(documents|forms|fees|documentcenter)(?:[/?#]|$)", target_url, re.I)
-    )
-
-    self.send_json(
-        200,
-        {
-            "ok": True,
-            "kind": "webpage",
-            "url": target_url,
-            "title": title,
-            "headings": headings[:25],
-            "fields": fields[:60],
-            "pdfLinks": pdf_links[:25],
-            "hasDocAccessHash": has_docaccess_hash,
-            "isDirectoryPage": is_directory_page,
-            "text": clean_text[:30000],
-        },
-    )
-
-  def handle_validate(self, data: dict):
-    program_json = data.get("programJson") if "programJson" in data else data
-    programs_list = data.get("programs")
-    try:
-      importlib.reload(validate_civiform_json)
-      issues = []
-      if isinstance(programs_list, list) and len(programs_list) >= 2:
-        loaded = []
-        for idx, p_json in enumerate(programs_list):
-          label = f"program-{idx + 1}.json"
-          loaded.append((label, p_json))
-          issues.extend(validate_civiform_json.validate_single_program(p_json, label))
-        issues.extend(validate_civiform_json.validate_multi_program_suite(loaded))
-      else:
-        issues = validate_civiform_json.validate_single_program(
-            program_json, "generated-program.json"
+        # 3. Google Gemini Proxy
+        effective_gemini_key = (
+            api_key
+            or os.environ.get("GEMINI_API_KEY", "")
+            or os.environ.get("GOOGLE_API_KEY", "")
         )
-      errors = [
-          f"{i.path}: {i.message}" for i in issues if i.severity == "ERROR"
-      ]
-      warnings = [
-          f"{i.path}: {i.message}" for i in issues if i.severity == "WARNING"
-      ]
-      self.send_json(
-          200,
-          {
-              "ok": True,
-              "valid": len(errors) == 0,
-              "errors": errors,
-              "warnings": warnings,
-          },
-      )
-    except Exception as e:
-      self.send_json(500, {"ok": False, "error": str(e)})
+        if not effective_gemini_key:
+          self._send_json(
+              400,
+              {
+                  "ok": False,
+                  "error": (
+                      f"Missing Gemini API key for {model}. Provide an API key"
+                      " in Step 1 or set GEMINI_API_KEY."
+                  ),
+              },
+          )
+          return
 
-  def handle_gemini_proxy(self, data: dict):
-    provider = (data.get("provider") or "gemini").strip().lower()
-    api_key = (data.get("apiKey") or "").strip() or get_local_api_key(provider)
-    model = (data.get("model") or "gemini-3.5-flash").strip()
-    payload = data.get("payload") or {}
+        candidate_models = [model]
+        if model == "gemini-3.5-flash":
+          candidate_models.extend(["gemini-2.5-flash", "gemini-2.5-pro"])
+        elif model == "gemini-3.1-pro":
+          candidate_models.extend(["gemini-2.5-pro", "gemini-2.5-flash"])
+        elif model == "gemini-3.1-flash-lite":
+          candidate_models.extend(["gemini-2.5-flash-lite", "gemini-2.5-flash"])
+        elif "2.5-flash" not in model:
+          candidate_models.append("gemini-2.5-flash")
 
-    if not api_key:
-      self.send_json(
-          200,
-          {
-              "ok": False,
-              "error": f"No API key provided for {provider}.",
-          },
-      )
+        # Keep thinkingBudget minimal so structured JSON returns quickly without timeout
+        if isinstance(gemini_payload, dict):
+          gen_cfg = gemini_payload.setdefault("generationConfig", {})
+          if isinstance(gen_cfg, dict) and "thinkingConfig" not in gen_cfg:
+            if "pro" in model.lower():
+              gen_cfg["thinkingConfig"] = {"thinkingBudget": 128}
+            else:
+              gen_cfg["thinkingConfig"] = {"thinkingBudget": 0}
+
+          # If prompt already contains rich extracted text (>= 2500 chars), strip redundant inlineData PDFs
+          contents_list = gemini_payload.get("contents")
+          if isinstance(contents_list, list):
+            total_text_chars = 0
+            for c_item in contents_list:
+              if isinstance(c_item, dict) and isinstance(
+                  c_item.get("parts"), list
+              ):
+                for p_item in c_item["parts"]:
+                  if isinstance(p_item, dict) and isinstance(
+                      p_item.get("text"), str
+                  ):
+                    total_text_chars += len(p_item["text"])
+            if total_text_chars >= 2500:
+              for c_item in contents_list:
+                if isinstance(c_item, dict) and isinstance(
+                    c_item.get("parts"), list
+                ):
+                  c_item["parts"] = [
+                      p_item
+                      for p_item in c_item["parts"]
+                      if not (isinstance(p_item, dict) and "inlineData" in p_item)
+                  ]
+
+        payload_bytes = json.dumps(gemini_payload).encode("utf-8")
+        last_err = "Unknown Gemini proxy error"
+        resp_data = None
+        used_model = model
+
+        for cand_model in candidate_models:
+          try:
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{urllib.parse.quote(cand_model)}:generateContent?key="
+                f"{urllib.parse.quote(effective_gemini_key)}"
+            )
+            req = urllib.request.Request(
+                url,
+                data=payload_bytes,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=180, context=ctx) as resp:
+              resp_data = json.loads(resp.read().decode("utf-8"))
+              used_model = cand_model
+              break
+          except urllib.error.HTTPError as he:
+            err_body = he.read().decode("utf-8", errors="replace")
+            last_err = f"HTTP {he.code} for {cand_model}: {err_body[:300]}"
+          except Exception as ex:
+            last_err = f"{cand_model} error: {str(ex)}"
+
+        if resp_data is not None:
+          self._send_json(
+              200,
+              {
+                  "ok": True,
+                  "modelUsed": used_model,
+                  "response": resp_data,
+              },
+          )
+        else:
+          self._send_json(
+              200,
+              {
+                  "ok": False,
+                  "error": last_err,
+              },
+          )
+      except Exception as e:
+        self._send_json(
+            200,
+            {
+                "ok": False,
+                "error": str(e),
+            },
+        )
       return
 
-    if provider == "anthropic":
-      endpoint = "https://api.anthropic.com/v1/messages"
-      headers = {
-          "Content-Type": "application/json",
-          "x-api-key": api_key,
-          "anthropic-version": "2023-06-01",
-      }
-    elif provider == "openai":
-      endpoint = "https://api.openai.com/v1/chat/completions"
-      headers = {
-          "Content-Type": "application/json",
-          "Authorization": f"Bearer {api_key}",
-      }
-    else:
-      if isinstance(payload.get("contents"), list):
-        for c in payload["contents"]:
-          if isinstance(c, dict):
-            for p in c.get("parts") or []:
-              if isinstance(p, dict):
-                if "inline_data" in p and "inlineData" not in p:
-                  p["inlineData"] = {
-                      "mimeType": (
-                          p["inline_data"].get("mime_type")
-                          or p["inline_data"].get("mimeType")
-                      ),
-                      "data": p["inline_data"].get("data"),
-                  }
-                  del p["inline_data"]
-      endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{urllib.parse.quote(model)}:generateContent?key={urllib.parse.quote(api_key)}"
-      headers = {"Content-Type": "application/json"}
+    self.send_error(404, "Endpoint not found")
 
-    req = urllib.request.Request(
-        endpoint,
-        data=json.dumps(payload).encode("utf-8"),
-        headers=headers,
-        method="POST",
-    )
-    try:
-      with urllib.request.urlopen(req, timeout=90) as resp:
-        resp_body = json.loads(resp.read().decode("utf-8"))
-        self.send_json(200, {"ok": True, "modelUsed": model, "response": resp_body})
-    except urllib.error.HTTPError as e:
-      err_body = e.read().decode("utf-8", errors="replace")
-      self.send_json(
-          200,
-          {
-              "ok": False,
-              "error": f"{provider.upper()} HTTP {e.code}: {err_body[:500]}",
-          },
-      )
-    except Exception as e:
-      self.send_json(200, {"ok": False, "error": str(e)})
-
-
-def raw_body_to_text(raw_bytes: bytes) -> str:
-  for enc in ("utf-8", "latin-1"):
-    try:
-      return raw_bytes.decode(enc)
-    except UnicodeDecodeError:
-      continue
-  return raw_bytes.decode("utf-8", errors="replace")
+  def _send_json(self, status_code, data):
+    body = json.dumps(data).encode("utf-8")
+    self.send_response(status_code)
+    self.send_header("Content-Type", "application/json")
+    self.send_header("Content-Length", str(len(body)))
+    self.end_headers()
+    self.wfile.write(body)
 
 
 if __name__ == "__main__":
-  port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("PORT", "8765"))
-  with ReusableTCPServer(("::", port), ArchitectRequestHandler) as httpd:
-    print(f"Serving CiviForm Program Architect on http://[::]:{port}", flush=True)
+  port = int(
+      sys.argv[1] if len(sys.argv) > 1 else os.environ.get("PORT", "8765")
+  )
+  with DualStackServer(("::", port), ArchitectHandler) as httpd:
+    print(f"Serving CiviForm Program Architect on http://[::]:{port}")
+    sys.stdout.flush()
     httpd.serve_forever()

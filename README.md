@@ -4,15 +4,15 @@ A 3-step U.S. Web Design System (USWDS) web application for designing, reviewing
 
 ## Features
 
-- **Step 1 — Define Program**: Configure target jurisdiction, single or dual-program suite generation (with automatic shared universal question harmonization), program archetype, custom instructions, and upload PDFs or fetch web pages as source material. Includes a built-in `test` jurisdiction mode for instant previewing without LLM API calls.
-- **Step 2 — Review & Edit**: Interactive USWDS multiselectable accordions to review and edit program details, application overview steps (1–5 steps), and screens, questions, and conditional logic.
-- **Step 3 — Export & Visualize**: Generates CiviForm-compatible JSON, runs 12-rule schema validation (`scripts/validate_civiform_json.py`), and renders an interactive CiviForm flowchart visualizer (`public/visualizer/`).
+- **Step 1 — Define Program**: Configure target jurisdiction, single or dual-program suite generation (with independent Program 1 & Program 2 archetype selectors and automatic shared universal question harmonization), program language mode (`English and generated Spanish`, `Only English`, or `Only languages included in sources`), custom instructions, and multi-file PDF uploads or remote URL fetching as source material. Includes a built-in `test` jurisdiction mode for instant previewing without LLM API calls.
+- **Step 2 — Review & Edit**: Interactive USWDS multiselectable accordions to review and edit program details, application overview steps (1–5 steps), and screens, questions, and conditional logic across 1 or 2 programs.
+- **Step 3 — Export & Visualize**: Generates CiviForm-compatible JSON, runs 12-rule schema validation (`scripts/validate_civiform_json.py`), and renders an interactive CiviForm flowchart visualizer (`public/visualizer/`) with `UNIVERSAL QUESTION` and `SHARED QUESTION` badges.
 
 ## Project Structure
 
 ```
 program-architect/
-├── server.py                      # Python HTTP & API server (/api/validate, /api/fetch-url, /api/gemini)
+├── server.py                      # Python HTTP & API server (/api/validate, /api/fetch-url, /api/extract-pdf-text, /api/gemini)
 ├── requirements.txt               # Python dependencies
 ├── Dockerfile                     # Container image for Cloud Run / Docker deployment
 ├── LICENSE
