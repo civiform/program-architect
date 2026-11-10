@@ -573,6 +573,7 @@ def validate_single_program(data: Dict[str, Any], file_label: str) -> List[Valid
 
     referenced_questions: Set[int] = set()
     seen_questions_prior_blocks: Set[int] = set()
+    last_block_by_pred: Dict[str, Tuple[int, str]] = {}
     for b_idx, b in enumerate(blocks):
         b_path = f"program.blockDefinitions[{b_idx}]"
         b_id = b.get("id")
@@ -628,6 +629,19 @@ def validate_single_program(data: Dict[str, Any], file_label: str) -> List[Valid
         hide_pred = b.get("hidePredicate")
         if isinstance(hide_pred, dict) and hide_pred.get("rootNode"):
             _validate_expression_tree(hide_pred["rootNode"], file_label, f"{b_path}.hidePredicate.rootNode", q_map, issues)
+            pred_key = json.dumps(hide_pred["rootNode"], sort_keys=True)
+            if pred_key in last_block_by_pred:
+                prev_idx, prev_name = last_block_by_pred[pred_key]
+                if b_idx > prev_idx + 1:
+                    issues.append(
+                        ValidationIssue(
+                            "WARNING",
+                            file_label,
+                            f"{b_path}.hidePredicate",
+                            f"Block '{b_name}' shares identical hidePredicate with earlier Block '{prev_name}' (screen {prev_idx + 1}), but {b_idx - prev_idx - 1} screen(s) are placed between them. Group screens sharing the same trigger condition contiguously for optimal applicant UX.",
+                        )
+                    )
+            last_block_by_pred[pred_key] = (b_idx, b_name)
             for leaf in _extract_predicate_leaf_nodes(hide_pred["rootNode"]):
                 ref_qid = leaf.get("questionId")
                 if ref_qid in q_map and ref_qid not in seen_questions_prior_blocks:

@@ -46,7 +46,7 @@
       color: #ffffff;
       border-radius: 4px;
       padding: 0.25rem 0.65rem;
-      font-size: 0.78rem;
+      font-size: 12px;
       font-weight: 600;
       display: inline-flex;
       align-items: center;
@@ -60,6 +60,7 @@
 
     .meta-pill strong {
       color: #97d4ea;
+      font-size: 12px;
     }
 
     /* Top Control & Optional Simulation Bar */
@@ -109,7 +110,7 @@
     }
 
     .sim-label {
-      font-size: 0.74rem;
+      font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -423,7 +424,7 @@
     }
 
     .canvas-outline__title {
-      font-size: 0.8rem;
+      font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -691,7 +692,7 @@
     .terminal-node {
       background: var(--uswds-blue-dark);
       color: #ffffff;
-      border: 2px solid var(--uswds-blue-vivid);
+      border: none;
       border-radius: 999px;
       padding: 0.55rem 1.6rem;
       font-size: 0.86rem;
@@ -705,8 +706,27 @@
 
     .terminal-node.is-blocked {
       opacity: 0.45;
-      border-color: #8d9297;
+      border: none;
       background: #565c65;
+    }
+
+    .terminal-node.terminal-node--blocked {
+      background: #7a0802;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 2px 6px rgba(122, 8, 2, 0.25);
+    }
+
+    .terminal-node.terminal-node--blocked.is-triggered {
+      background: #b50909;
+      border: none;
+      box-shadow: 0 0 0 3px rgba(181, 9, 9, 0.35), var(--shadow-elevated);
+    }
+
+    .terminal-node.terminal-node--blocked.is-inactive {
+      opacity: 0.45;
+      background: #565c65;
+      border: none;
     }
 
     .eligibility-fork-row {
@@ -767,13 +787,14 @@
 
     .eligibility-stop-card {
       background: #fff5f5;
-      border: 2px solid var(--uswds-red-dark);
+      border: 2px solid var(--uswds-red-dark, #b50909);
       border-radius: 8px;
-      padding: 0.75rem 1.1rem;
+      padding: 0.95rem 1.15rem;
       box-shadow: var(--shadow-card);
       text-align: left;
       transition: all 0.2s ease;
     }
+
 
     .eligibility-stop-card.is-triggered-stop {
       background: #fce8e6;
@@ -801,6 +822,21 @@
       margin-bottom: 0.3rem;
     }
 
+    .eligibility-stop-card__badge--ineligible {
+      background: #f8d5d1;
+      border: 1px solid var(--uswds-red-dark, #b50909);
+      color: #7a0802;
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.55rem;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
     .eligibility-stop-card__title {
       font-size: 0.9rem;
       font-weight: 700;
@@ -816,6 +852,73 @@
       padding: 0.28rem 0.5rem;
       border-radius: 4px;
       display: block;
+    }
+
+    /* Non-Gating Advisory Card Variant */
+    .eligibility-stop-card.eligibility-stop-card--non-gating {
+      background: #fefae6;
+      border: 2px solid var(--uswds-gold-dark, #b35c00);
+      border-radius: 8px;
+      padding: 0.95rem 1.15rem;
+      box-shadow: var(--shadow-card);
+      text-align: left;
+    }
+
+    .eligibility-stop-card.eligibility-stop-card--non-gating.is-triggered-stop {
+      background: #fffdf5;
+      box-shadow: 0 0 0 3px rgba(179, 92, 0, 0.25), var(--shadow-elevated);
+    }
+
+    .eligibility-stop-card.eligibility-stop-card--non-gating.is-inactive-stop {
+      opacity: 0.55;
+      border-style: dashed;
+      border-color: #a9aeb1;
+      background: #f8f9fa;
+    }
+
+    .eligibility-stop-card__badge-wrapper {
+      margin-bottom: 0.45rem;
+    }
+
+    .eligibility-stop-card__badge--advisory {
+      background: #faf3d1;
+      border: 1px solid var(--uswds-gold-dark, #b35c00);
+      color: #6e3900;
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.55rem;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .eligibility-stop-card__lead-text {
+      font-size: 0.82rem;
+      color: #1b1b1b;
+      margin: 0.25rem 0 0.35rem 0;
+      line-height: 1.4;
+    }
+
+    .eligibility-stop-card__bullet-list {
+      margin: 0.2rem 0 0.45rem 1.25rem;
+      padding: 0;
+      font-size: 0.84rem;
+      color: #1b1b1b;
+    }
+
+    .eligibility-stop-card__bullet-list li {
+      margin-bottom: 0.15rem;
+      font-weight: 700;
+    }
+
+    .eligibility-stop-card__closing-text {
+      font-size: 0.82rem;
+      color: var(--ink-muted, #565c65);
+      margin: 0;
+      line-height: 1.4;
     }
 
     .repeater-group-box {
@@ -1091,12 +1194,14 @@
       color: var(--ink-deep);
       margin: 0;
       line-height: 1.25;
+      overflow-wrap: break-word;
     }
 
     .screen-node__desc {
       font-size: 0.82rem;
       color: var(--ink-muted);
       margin: 0.2rem 0 0;
+      overflow-wrap: break-word;
     }
 
     .status-badge {
@@ -1165,7 +1270,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
-      color: #1c1917;
+      color: rgb(27, 27, 27);
     }
 
     .status-badge-tag--visibility {
@@ -1212,7 +1317,7 @@
       padding: 0.12rem 0.45rem;
       border-radius: 4px;
       font-size: 0.86em;
-      color: #1a1000;
+      color: rgb(27, 27, 27);
     }
 
     .predicate-page-ref {
@@ -1297,11 +1402,13 @@
       padding-left: 0.5rem;
       margin-top: 0.125rem;
       margin-bottom: 0;
-      color: #374151;
+      color: rgb(27, 27, 27);
     }
 
     .predicate-bullet-list li {
       margin-top: 0.125rem;
+      font-weight: 700;
+      color: rgb(27, 27, 27);
     }
 
     .screen-predicate-banner--eligibility {
@@ -1492,6 +1599,7 @@
       color: var(--ink-deep);
       margin: 0;
       line-height: 1.35;
+      overflow-wrap: break-word;
     }
 
     .question-chip__help {
@@ -1499,6 +1607,7 @@
       color: var(--ink-muted);
       margin: 0.25rem 0 0;
       line-height: 1.35;
+      overflow-wrap: break-word;
     }
 
     .question-options-details {
@@ -1615,6 +1724,16 @@
       animation: flowDash 1s linear infinite;
     }
 
+    .flow-edge--elig-pass {
+      stroke: #188177;
+      stroke-width: 2.75px;
+    }
+
+    .flow-edge--elig-pass-active {
+      stroke: #188177;
+      stroke-width: 3.5px;
+    }
+
     .flow-edge--stop {
       stroke: #b50909;
       stroke-width: 2.75px;
@@ -1635,23 +1754,21 @@
     }
 
     .flow-edge--loop {
-      stroke: #0081a1;
-      stroke-width: 3px;
-      stroke-dasharray: 6 4;
-      animation: flowDash 1.2s linear infinite;
+      stroke: #005ea2;
+      stroke-width: 2.75px;
     }
 
     .flow-edge--conditional {
-      stroke: #9e6c00;
+      stroke: #005ea2;
       stroke-width: 2.75px;
-      stroke-dasharray: 2.5 5.5;
+      stroke-dasharray: 5 4;
       stroke-linecap: round;
     }
 
     .flow-edge--conditional-active {
-      stroke: #9e6c00;
+      stroke: #005ea2;
       stroke-width: 3.5px;
-      stroke-dasharray: 2.5 5.5;
+      stroke-dasharray: 5 4;
       stroke-linecap: round;
       animation: flowDash 1s linear infinite;
     }

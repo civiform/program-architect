@@ -12,7 +12,7 @@
 (function (global) {
   "use strict";
 
-  const VISUALIZER_TEMPLATE_HTML = '<div class="visualizer-embed-shell">\n        <!-- Program Hero Header -->\n        <header class="program-hero">\n          <div class="grid-container-widescreen">\n            <h2 class="program-hero__title" id="program-title-heading">Loading Program...</h2>\n            <p class="program-hero__subtitle" id="program-desc" style="margin-top: 0.25rem;"></p>\n            <div class="meta-pill-group" id="program-meta-pills"></div>\n          </div>\n        </header>\n\n        <!-- Flowchart Canvas Area -->\n        <div class="canvas-stage" id="canvas-stage">\n          <div class="grid-container-widescreen canvas-stage-inner">\n            <div class="canvas-sidebar">\n              <div class="canvas-toolbar">\n                <label for="locale-select" class="sim-label" style="margin-bottom: 0;">Language</label>\n                <select id="locale-select" class="usa-select margin-top-0" style="height: 2.2rem; padding: 0.2rem 0.6rem; font-size: 0.82rem; width: 100%;">\n                  <option value="en_US">en_US</option>\n                </select>\n              </div>\n\n              <div class="canvas-outline-container" id="canvas-outline-container">\n                <div class="canvas-outline__header" id="canvas-outline-toggle-btn" role="button" tabindex="0" aria-expanded="true">\n                  <span class="canvas-outline__title">Screens</span>\n                  <svg class="canvas-outline__arrow" id="canvas-outline-arrow" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">\n                    <path d="M7 10l5 5 5-5z" fill="currentColor"/>\n                  </svg>\n                </div>\n                <div class="canvas-outline__body" id="canvas-outline-body">\n                  <ul class="outline-list" id="canvas-outline-list"></ul>\n                </div>\n              </div>\n\n              <div class="canvas-toolbar">\n                <div class="legend-list" id="canvas-legend-list" aria-label="Flowchart Legend">\n                  <span class="legend-item"><span class="legend-swatch legend-swatch--program">P</span> Program screen</span>\n                  <span class="legend-item"><span class="legend-swatch legend-swatch--eligibility">E</span> Eligibility condition</span>\n                  <span class="legend-item"><span class="legend-swatch legend-swatch--visibility">V</span> Conditionally visible screen</span>\n                  <span class="legend-item"><span class="legend-swatch legend-swatch--loop">N</span> Enumerator screen</span>\n                </div>\n              </div>\n            </div>\n\n            <div class="flowchart-viewport" id="flowchart-viewport">\n              <svg class="flowchart-svg-layer" id="flowchart-svg" aria-hidden="true">\n                <defs>\n                  <marker id="arrow-default" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#005ea2"></path>\n                  </marker>\n                  <marker id="arrow-active" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#2e8540"></path>\n                  </marker>\n                  <marker id="arrow-stop" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#b50909"></path>\n                  </marker>\n                  <marker id="arrow-hidden" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#b0b5b9"></path>\n                  </marker>\n                  <marker id="arrow-loop" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#0081a1"></path>\n                  </marker>\n                  <marker id="arrow-conditional" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#9e6c00"></path>\n                  </marker>\n                  <marker id="dot-conditional" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4.5" markerHeight="4.5">\n                    <circle cx="5" cy="5" r="3.5" fill="#9e6c00"></circle>\n                  </marker>\n                </defs>\n              </svg>\n              <div class="flowchart-nodes-layer" id="flowchart-nodes"></div>\n            </div>\n          </div>\n        </div>\n      </div>';
+  const VISUALIZER_TEMPLATE_HTML = '<div class="visualizer-embed-shell">\n        <!-- Program Hero Header -->\n        <header class="program-hero">\n          <div class="grid-container-widescreen">\n            <h2 class="program-hero__title" id="program-title-heading">Loading Program...</h2>\n            <p class="program-hero__subtitle" id="program-desc" style="margin-top: 0.25rem;"></p>\n            <div class="meta-pill-group" id="program-meta-pills"></div>\n          </div>\n        </header>\n\n        <!-- Flowchart Canvas Area -->\n        <div class="canvas-stage" id="canvas-stage">\n          <div class="grid-container-widescreen canvas-stage-inner">\n            <div class="canvas-sidebar">\n              <div class="canvas-toolbar">\n                <label for="locale-select" class="sim-label" style="margin-bottom: 0;">Language</label>\n                <select id="locale-select" class="usa-select margin-top-0" style="height: 2.2rem; padding: 0.2rem 0.6rem; font-size: 0.82rem; width: 100%;">\n                  <option value="en_US">en_US</option>\n                </select>\n              </div>\n\n              <div class="canvas-outline-container" id="canvas-outline-container">\n                <div class="canvas-outline__header" id="canvas-outline-toggle-btn" role="button" tabindex="0" aria-expanded="true">\n                  <span class="canvas-outline__title">Screens</span>\n                  <svg class="canvas-outline__arrow" id="canvas-outline-arrow" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">\n                    <path d="M7 10l5 5 5-5z" fill="currentColor"/>\n                  </svg>\n                </div>\n                <div class="canvas-outline__body" id="canvas-outline-body">\n                  <ul class="outline-list" id="canvas-outline-list"></ul>\n                </div>\n              </div>\n\n              <div class="canvas-toolbar">\n                <div class="legend-list" id="canvas-legend-list" aria-label="Flowchart Legend">\n                  <span class="legend-item"><span class="legend-swatch legend-swatch--program">P</span> Program screen</span>\n                  <span class="legend-item"><span class="legend-swatch legend-swatch--eligibility">E</span> Eligibility condition</span>\n                  <span class="legend-item"><span class="legend-swatch legend-swatch--visibility">V</span> Conditionally visible screen</span>\n                  <span class="legend-item"><span class="legend-swatch legend-swatch--loop">N</span> Enumerator screen</span>\n                </div>\n              </div>\n            </div>\n\n            <div class="flowchart-viewport" id="flowchart-viewport">\n              <svg class="flowchart-svg-layer" id="flowchart-svg" aria-hidden="true">\n                <defs>\n                  <marker id="arrow-default" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#005ea2"></path>\n                  </marker>\n                  <marker id="arrow-active" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#2e8540"></path>\n                  </marker>\n                  <marker id="arrow-stop" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#b50909"></path>\n                  </marker>\n                  <marker id="arrow-elig-pass" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#188177"></path>\n                  </marker>\n                  <marker id="arrow-hidden" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#b0b5b9"></path>\n                  </marker>\n                  <marker id="arrow-loop" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#005ea2"></path>\n                  </marker>\n                  <marker id="arrow-conditional" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">\n                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#005ea2"></path>\n                  </marker>\n                  <marker id="dot-conditional" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4.5" markerHeight="4.5">\n                    <circle cx="5" cy="5" r="3.5" fill="#005ea2"></circle>\n                  </marker>\n                </defs>\n              </svg>\n              <div class="flowchart-nodes-layer" id="flowchart-nodes"></div>\n            </div>\n          </div>\n        </div>\n      </div>';
 
   let mountContainer = null;
   let isMounted = false;
@@ -64,6 +64,13 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+    }
+
+    function formatCardText(str) {
+      if (!str) return '';
+      return escapeHtml(str)
+        .replace(/:\/\/|\/+/g, match => `${match}<wbr>`)
+        .replace(/\$this(?:\.parent)*/g, match => `<code class="predicate-variable">${match}</code>`);
     }
 
     function getTranslation(localizedObj, locale = state.locale) {
@@ -209,7 +216,7 @@
       return '';
     }
 
-    function formatLeafNode(node, questionsMap, invert = false, isStandalone = false, leadPrefix = '', includePageRef = true) {
+    function formatLeafNode(node, questionsMap, invert = false, isStandalone = false, leadPrefix = '', includePageRef = false) {
       const q = questionsMap.get(node.questionId);
       const qPrompt = getQuestionTextPrompt(q, node.questionId);
       const pageRefHTML = includePageRef ? getQuestionPageRef(node.questionId) : '';
@@ -225,18 +232,25 @@
           parsedIds = [rawValStr];
         }
         const options = getQuestionOptions(q);
-        const labels = options
-          .filter(opt => parsedIds.includes(String(opt.id)) || parsedIds.includes(String(opt.adminName)))
-          .map(opt => getTranslation(opt.localizedOptionText));
-
-        const displayLabels = labels.length > 0 ? labels : parsedIds.map(id => `Option ${id}`);
         const rawIsNegative = (node.operator === 'NOT_IN' || node.operator === 'NONE_OF' || node.operator === 'NOT_EQUAL_TO');
         const effectiveIsNegative = invert ? !rawIsNegative : rawIsNegative;
-        const opPhrase = effectiveIsNegative
-          ? (displayLabels.length > 1 ? 'is none of:' : 'is not:')
-          : (displayLabels.length > 1 ? 'is any of:' : 'is:');
+
+        // Present affirmative responses that lead to the screen / satisfy the condition:
+        let targetOptions = [];
+        if (effectiveIsNegative && options.length > 0) {
+          targetOptions = options.filter(opt => !parsedIds.includes(String(opt.id)) && !parsedIds.includes(String(opt.adminName)));
+        } else {
+          targetOptions = options.filter(opt => parsedIds.includes(String(opt.id)) || parsedIds.includes(String(opt.adminName)));
+        }
+
+        let displayLabels = targetOptions.map(opt => getTranslation(opt.localizedOptionText) || opt.adminName || String(opt.id));
+        if (displayLabels.length === 0) {
+          displayLabels = parsedIds.map(id => `Option ${id}`);
+        }
+
+        const opPhrase = 'is:';
         const bulletList = displayLabels.map(l => `<li>${escapeHtml(l)}</li>`).join('');
-        return `<div><div style="margin-bottom:0.25rem; font-size:0.8rem; color:#1f2937;">${prefix}${varQ} ${opPhrase}</div><ul class="predicate-bullet-list">${bulletList}</ul></div>`;
+        return `<div><div style="margin-bottom:0.25rem; font-size:0.8rem; color:rgb(27, 27, 27);">${prefix}${varQ} ${opPhrase}</div><ul class="predicate-bullet-list">${bulletList}</ul></div>`;
       }
 
       if (node.scalar === 'CURRENCY_CENTS' || node.scalar === 'CURRENCY') {
@@ -245,25 +259,32 @@
         const opMapNormal = { 'LESS_THAN': '<', 'LESS_THAN_OR_EQUAL_TO': '≤', 'GREATER_THAN': '>', 'GREATER_THAN_OR_EQUAL_TO': '≥', 'EQUAL_TO': '=', 'NOT_EQUAL_TO': '≠' };
         const opMapInverted = { 'LESS_THAN': '≥', 'LESS_THAN_OR_EQUAL_TO': '>', 'GREATER_THAN': '≤', 'GREATER_THAN_OR_EQUAL_TO': '<', 'EQUAL_TO': '≠', 'NOT_EQUAL_TO': '=' };
         const showOp = invert ? (opMapInverted[node.operator] || node.operator) : (opMapNormal[node.operator] || node.operator);
-        return `<div style="font-size:0.8rem; color:#1f2937;">${prefix}${varQ} ${showOp} ${valDollars}</div>`;
+        return `<div style="font-size:0.8rem; color:rgb(27, 27, 27);">${prefix}${varQ} ${showOp} ${valDollars}</div>`;
       }
 
-      if (node.scalar === 'DATE' && (node.operator === 'AGE_OLDER_THAN' || node.operator === 'AGE_YOUNGER_THAN')) {
+      if (node.scalar === 'DATE' && (node.operator === 'AGE_OLDER_THAN' || node.operator === 'AGE_YOUNGER_THAN' || node.operator === 'AGE_BETWEEN')) {
+        if (node.operator === 'AGE_BETWEEN') {
+          const nums = (rawValStr.match(/\d+/g) || []).map(Number);
+          const minAge = nums[0] ?? 14;
+          const maxAge = nums[1] ?? 21;
+          const showText = invert ? `not between ${minAge} and ${maxAge} years` : `between ${minAge} and ${maxAge} years`;
+          return `<div style="font-size:0.8rem; color:rgb(27, 27, 27);">${prefix}${varQ} (Age) ${showText}</div>`;
+        }
         const N = Number(rawValStr || 0);
         const opMapNormal = { 'AGE_OLDER_THAN': '>', 'AGE_YOUNGER_THAN': '<' };
         const opMapInverted = { 'AGE_OLDER_THAN': '≤', 'AGE_YOUNGER_THAN': '≥' };
         const showOp = invert ? (opMapInverted[node.operator] || node.operator) : (opMapNormal[node.operator] || node.operator);
-        return `<div style="font-size:0.8rem; color:#1f2937;">${prefix}${varQ} (Age) ${showOp} ${N} years</div>`;
+        return `<div style="font-size:0.8rem; color:rgb(27, 27, 27);">${prefix}${varQ} (Age) ${showOp} ${N} years</div>`;
       }
 
       const opNormal = { 'EQUAL_TO': '=', 'NOT_EQUAL_TO': '≠', 'GREATER_THAN': '>', 'LESS_THAN': '<' };
       const opInverted = { 'EQUAL_TO': '≠', 'NOT_EQUAL_TO': '=', 'GREATER_THAN': '≤', 'LESS_THAN': '≥' };
       const showOp = invert ? (opInverted[node.operator] || node.operator) : (opNormal[node.operator] || node.operator);
       const formattedVal = (rawValStr.startsWith('"') || rawValStr.startsWith('$') || !isNaN(Number(rawValStr))) ? rawValStr : `"${rawValStr}"`;
-      return `<div style="font-size:0.8rem; color:#1f2937;">${prefix}${varQ} ${showOp} ${formattedVal}</div>`;
+      return `<div style="font-size:0.8rem; color:rgb(27, 27, 27);">${prefix}${varQ} ${showOp} ${formattedVal}</div>`;
     }
 
-    function formatPredicateNode(node, questionsMap, invert = false, isRoot = true, leadPrefix = '', includePageRef = true) {
+    function formatPredicateNode(node, questionsMap, invert = false, isRoot = true, leadPrefix = '', includePageRef = false) {
       if (!node) return '';
       if (node.questionId != null || node.type === 'leaf') {
         return formatLeafNode(node, questionsMap, invert, isRoot, leadPrefix, includePageRef);
@@ -308,8 +329,8 @@
       return '';
     }
 
-    function formatEligibilityRequirement(node, questionsMap) {
-      if (!node) return 'Must meet eligibility requirements to continue.';
+    function formatEligibilityRequirement(node, questionsMap, isGating = true) {
+      if (!node) return isGating ? 'Must meet eligibility requirements to continue.' : 'Meeting eligibility requirements continues without warning.';
 
       if (node.questionId != null || node.type === 'leaf') {
         const q = questionsMap.get(node.questionId);
@@ -329,57 +350,84 @@
 
           const displayLabels = labels.length > 0 ? labels : parsedIds;
           const isNeg = (node.operator === 'NOT_IN' || node.operator === 'NONE_OF' || node.operator === 'NOT_EQUAL_TO');
-          if (displayLabels.length === 1) {
-            return isNeg
-              ? `Must NOT select <strong>"${escapeHtml(displayLabels[0])}"</strong> to continue.`
-              : `Must select <strong>"${escapeHtml(displayLabels[0])}"</strong> to continue.`;
-          } else if (displayLabels.length > 1) {
-            const joined = displayLabels.map(l => `<strong>"${escapeHtml(l)}"</strong>`).join(isNeg ? ' or ' : ' or ');
-            return isNeg
-              ? `Must NOT select ${joined} to continue.`
-              : `Must select ${joined} to continue.`;
+          if (isGating) {
+            if (displayLabels.length === 1) {
+              return isNeg
+                ? `Must NOT select <strong>"${escapeHtml(displayLabels[0])}"</strong> to continue.`
+                : `Must select <strong>"${escapeHtml(displayLabels[0])}"</strong> to continue.`;
+            } else if (displayLabels.length > 1) {
+              const joined = displayLabels.map(l => `<strong>"${escapeHtml(l)}"</strong>`).join(' or ');
+              return isNeg
+                ? `Must NOT select ${joined} to continue.`
+                : `Must select ${joined} to continue.`;
+            }
+            return `Must select valid option to continue.`;
+          } else {
+            // Non-gating: '[selection] continues without warning'
+            if (displayLabels.length === 1) {
+              return isNeg
+                ? `Selecting anything other than <strong>"${escapeHtml(displayLabels[0])}"</strong> continues without warning.`
+                : `<strong>"${escapeHtml(displayLabels[0])}"</strong> continues without warning.`;
+            } else if (displayLabels.length > 1) {
+              const joined = displayLabels.map(l => `<strong>"${escapeHtml(l)}"</strong>`).join(' or ');
+              return isNeg
+                ? `Not selecting ${joined} continues without warning.`
+                : `${joined} continues without warning.`;
+            }
+            return `Valid selection continues without warning.`;
           }
-          return `Must select valid option to continue.`;
         }
 
         if (node.scalar === 'CURRENCY_CENTS' || node.scalar === 'CURRENCY') {
           const valCents = Number(rawValStr || 0);
           const valDollars = '$' + (valCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           const opTextMap = {
-            'LESS_THAN': `be less than ${valDollars}`,
-            'LESS_THAN_OR_EQUAL_TO': `be ≤ ${valDollars}`,
-            'GREATER_THAN': `be greater than ${valDollars}`,
-            'GREATER_THAN_OR_EQUAL_TO': `be ≥ ${valDollars}`,
-            'EQUAL_TO': `equal ${valDollars}`,
-            'NOT_EQUAL_TO': `not equal ${valDollars}`
+            'LESS_THAN': `less than ${valDollars}`,
+            'LESS_THAN_OR_EQUAL_TO': `≤ ${valDollars}`,
+            'GREATER_THAN': `greater than ${valDollars}`,
+            'GREATER_THAN_OR_EQUAL_TO': `≥ ${valDollars}`,
+            'EQUAL_TO': `${valDollars}`,
+            'NOT_EQUAL_TO': `not ${valDollars}`
           };
           const phrase = opTextMap[node.operator] || `${node.operator} ${valDollars}`;
-          return `Must ${phrase} to continue.`;
+          return isGating ? `Must be ${phrase} to continue.` : `Amount ${phrase} continues without warning.`;
         }
 
-        if (node.scalar === 'DATE' && (node.operator === 'AGE_OLDER_THAN' || node.operator === 'AGE_YOUNGER_THAN')) {
+        if (node.scalar === 'DATE' && (node.operator === 'AGE_OLDER_THAN' || node.operator === 'AGE_YOUNGER_THAN' || node.operator === 'AGE_BETWEEN')) {
+          if (node.operator === 'AGE_BETWEEN') {
+            const nums = (rawValStr.match(/\d+/g) || []).map(Number);
+            const minAge = nums[0] ?? 14;
+            const maxAge = nums[1] ?? 21;
+            return isGating
+              ? `Must be between ${minAge} and ${maxAge} years old to continue.`
+              : `Age between ${minAge} and ${maxAge} years old continues without warning.`;
+          }
           const N = Number(rawValStr || 0);
           if (node.operator === 'AGE_OLDER_THAN') {
-            return `Must be older than ${N} years old to continue.`;
+            return isGating
+              ? `Must be older than ${N} years old to continue.`
+              : `Age older than ${N} years old continues without warning.`;
           } else if (node.operator === 'AGE_YOUNGER_THAN') {
-            return `Must be younger than ${N} years old to continue.`;
+            return isGating
+              ? `Must be younger than ${N} years old to continue.`
+              : `Age younger than ${N} years old continues without warning.`;
           }
         }
 
         const opTextMap = {
-          'LESS_THAN': `be < ${rawValStr}`,
-          'LESS_THAN_OR_EQUAL_TO': `be ≤ ${rawValStr}`,
-          'GREATER_THAN': `be > ${rawValStr}`,
-          'GREATER_THAN_OR_EQUAL_TO': `be ≥ ${rawValStr}`,
-          'EQUAL_TO': `be "${rawValStr}"`,
-          'NOT_EQUAL_TO': `not be "${rawValStr}"`
+          'LESS_THAN': `< ${rawValStr}`,
+          'LESS_THAN_OR_EQUAL_TO': `≤ ${rawValStr}`,
+          'GREATER_THAN': `> ${rawValStr}`,
+          'GREATER_THAN_OR_EQUAL_TO': `≥ ${rawValStr}`,
+          'EQUAL_TO': `"${rawValStr}"`,
+          'NOT_EQUAL_TO': `not "${rawValStr}"`
         };
         const phrase = opTextMap[node.operator] || `${node.operator} "${rawValStr}"`;
-        return `Must ${phrase} to continue.`;
+        return isGating ? `Must be ${phrase} to continue.` : `Value ${phrase} continues without warning.`;
       }
 
       if (Array.isArray(node.children) && node.children.length > 0) {
-        const childTexts = node.children.map(c => formatEligibilityRequirement(c.node || c, questionsMap)).filter(Boolean);
+        const childTexts = node.children.map(c => formatEligibilityRequirement(c.node || c, questionsMap, isGating)).filter(Boolean);
         if (node.type === 'and') {
           return childTexts.join(' AND ');
         } else if (node.type === 'or') {
@@ -387,7 +435,7 @@
         }
       }
 
-      return 'Must meet eligibility criteria to continue.';
+      return isGating ? 'Must meet eligibility criteria to continue.' : 'Meeting eligibility criteria continues without warning.';
     }
 
     function describeEligibility(block, questionsMap) {
@@ -411,10 +459,70 @@
         }
       }
 
+      // Compute affirmative responses that trigger the non-gating warning:
+      let warningResponses = [];
+      if (leaf && (leaf.scalar === 'SELECTION' || leaf.scalar === 'SELECTIONS')) {
+        const options = getQuestionOptions(q);
+        const isNeg = (leaf.operator === 'NOT_IN' || leaf.operator === 'NONE_OF' || leaf.operator === 'NOT_EQUAL_TO');
+        if (options && options.length > 0 && allowedOptionIds) {
+          if (isNeg) {
+            warningResponses = options
+              .filter(opt => allowedOptionIds.includes(String(opt.id)) || allowedOptionIds.includes(String(opt.adminName)))
+              .map(opt => getTranslation(opt.localizedOptionText) || opt.adminName || String(opt.id));
+          } else {
+            warningResponses = options
+              .filter(opt => !allowedOptionIds.includes(String(opt.id)) && !allowedOptionIds.includes(String(opt.adminName)))
+              .map(opt => getTranslation(opt.localizedOptionText) || opt.adminName || String(opt.id));
+          }
+        } else if (isNeg && allowedOptionIds) {
+          warningResponses = allowedOptionIds;
+        }
+      } else if (leaf && (leaf.scalar === 'CURRENCY_CENTS' || leaf.scalar === 'CURRENCY')) {
+        const rawValStr = String(leaf.value?.value || '');
+        const valCents = Number(rawValStr || 0);
+        const valDollars = '$' + (valCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const opMapInverted = {
+          'LESS_THAN': '≥',
+          'LESS_THAN_OR_EQUAL_TO': '>',
+          'GREATER_THAN': '≤',
+          'GREATER_THAN_OR_EQUAL_TO': '<',
+          'EQUAL_TO': '≠',
+          'NOT_EQUAL_TO': '='
+        };
+        const showOp = opMapInverted[leaf.operator] || leaf.operator;
+        warningResponses = [`${showOp} ${valDollars}`];
+      } else if (leaf && leaf.scalar === 'NUMBER') {
+        const rawValStr = String(leaf.value?.value || '');
+        const opMapInverted = {
+          'LESS_THAN': '≥',
+          'LESS_THAN_OR_EQUAL_TO': '>',
+          'GREATER_THAN': '≤',
+          'GREATER_THAN_OR_EQUAL_TO': '<',
+          'EQUAL_TO': '≠',
+          'NOT_EQUAL_TO': '='
+        };
+        const showOp = opMapInverted[leaf.operator] || leaf.operator;
+        warningResponses = [`${showOp} ${rawValStr}`];
+      } else if (leaf && leaf.scalar === 'DATE' && (leaf.operator === 'AGE_OLDER_THAN' || leaf.operator === 'AGE_YOUNGER_THAN' || leaf.operator === 'AGE_BETWEEN')) {
+        const rawValStr = String(leaf.value?.value || '');
+        if (leaf.operator === 'AGE_BETWEEN') {
+          const nums = (rawValStr.match(/\d+/g) || []).map(Number);
+          const minAge = nums[0] ?? 14;
+          const maxAge = nums[1] ?? 21;
+          warningResponses = [`Age not between ${minAge} and ${maxAge} years`];
+        } else {
+          const N = Number(rawValStr || 0);
+          const opMapInverted = { 'AGE_OLDER_THAN': '≤', 'AGE_YOUNGER_THAN': '≥' };
+          const showOp = opMapInverted[leaf.operator] || leaf.operator;
+          warningResponses = [`Age ${showOp} ${N} years`];
+        }
+      }
+
       return {
         questionId: leaf?.questionId,
         questionPrompt: qPrompt,
         allowedOptionIds,
+        warningResponses,
         effectivePassText: `Continue if ${passText}`,
         effectiveStopText: `Stopped if ${stopText}`,
         bannerRuleText: `Must satisfy ${passText} to continue`,
@@ -474,7 +582,13 @@
         return `<strong>${showOp} ${valDollars}</strong>`;
       }
 
-      if (leaf.scalar === 'DATE' && (leaf.operator === 'AGE_OLDER_THAN' || leaf.operator === 'AGE_YOUNGER_THAN')) {
+      if (leaf.scalar === 'DATE' && (leaf.operator === 'AGE_OLDER_THAN' || leaf.operator === 'AGE_YOUNGER_THAN' || leaf.operator === 'AGE_BETWEEN')) {
+        if (leaf.operator === 'AGE_BETWEEN') {
+          const nums = (rawValStr.match(/\d+/g) || []).map(Number);
+          const minAge = nums[0] ?? 14;
+          const maxAge = nums[1] ?? 21;
+          return `<strong>Age ${invert ? 'not ' : ''}${minAge}–${maxAge} years</strong>`;
+        }
         const N = Number(rawValStr || 0);
         const opMapNormal = { 'AGE_OLDER_THAN': '>', 'AGE_YOUNGER_THAN': '<' };
         const opMapInverted = { 'AGE_OLDER_THAN': '≤', 'AGE_YOUNGER_THAN': '≥' };
@@ -514,6 +628,11 @@
               state.simValues[leaf.questionId] = Math.round((cents / 100));
             } else if (leaf.scalar === 'DATE' && leaf.operator === 'AGE_OLDER_THAN') {
               state.simValues[leaf.questionId] = Number(leaf.value?.value || 59) + 5; // e.g. 65
+            } else if (leaf.scalar === 'DATE' && leaf.operator === 'AGE_YOUNGER_THAN') {
+              state.simValues[leaf.questionId] = Math.max(1, Number(leaf.value?.value || 18) - 2);
+            } else if (leaf.scalar === 'DATE' && leaf.operator === 'AGE_BETWEEN') {
+              const nums = (String(leaf.value?.value || '').match(/\d+/g) || []).map(Number);
+              state.simValues[leaf.questionId] = nums.length >= 2 ? Math.round((nums[0] + nums[1]) / 2) : 18;
             } else {
               state.simValues[leaf.questionId] = leaf.value?.value || '1';
             }
@@ -569,25 +688,66 @@
                 </div>
               </div>
             `;
-          } else if (leaf.scalar === 'DATE' && leaf.operator === 'AGE_OLDER_THAN') {
-            const N = Number(leaf.value?.value || 0);
-            const val = Number(state.simValues[leaf.questionId] || N + 5);
-            const isElig = val > N;
-            html += `
-              <div class="sim-box sim-box--eligibility">
-                <div>
-                  <span class="sim-label">Screen ${pageNum} Eligibility Gate: "${qPrompt}" (Age &gt; ${N})</span>
-                  <div class="sim-input-inline">
-                    <button type="button" class="sim-preset-btn ${val > N ? 'is-active' : ''}" data-q-id="${leaf.questionId}" data-val="${N + 6}">
-                      ✓ Age ${N + 6} (&gt; ${N} yrs — Eligible)
-                    </button>
-                    <button type="button" class="sim-preset-btn ${val <= N ? 'is-stop-active' : ''}" data-q-id="${leaf.questionId}" data-val="${Math.max(18, N - 5)}">
-                      ⛔ Age ${Math.max(18, N - 5)} (&le; ${N} yrs — Stops User)
-                    </button>
+          } else if (leaf.scalar === 'DATE' && (leaf.operator === 'AGE_OLDER_THAN' || leaf.operator === 'AGE_YOUNGER_THAN' || leaf.operator === 'AGE_BETWEEN')) {
+            if (leaf.operator === 'AGE_BETWEEN') {
+              const nums = (String(leaf.value?.value || '').match(/\d+/g) || []).map(Number);
+              const minAge = nums[0] ?? 14;
+              const maxAge = nums[1] ?? 21;
+              const midAge = Math.round((minAge + maxAge) / 2);
+              const val = Number(state.simValues[leaf.questionId] ?? midAge);
+              const inRange = val >= minAge && val <= maxAge;
+              html += `
+                <div class="sim-box sim-box--eligibility">
+                  <div>
+                    <span class="sim-label">Screen ${pageNum} Eligibility Gate: "${qPrompt}" (Age ${minAge}–${maxAge})</span>
+                    <div class="sim-input-inline">
+                      <button type="button" class="sim-preset-btn ${inRange ? 'is-active' : ''}" data-q-id="${leaf.questionId}" data-val="${midAge}">
+                        ✓ Age ${midAge} (${minAge}–${maxAge} yrs — Eligible)
+                      </button>
+                      <button type="button" class="sim-preset-btn ${!inRange ? 'is-stop-active' : ''}" data-q-id="${leaf.questionId}" data-val="${maxAge + 3}">
+                        ⛔ Age ${maxAge + 3} (Outside ${minAge}–${maxAge} yrs — Stops User)
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            `;
+              `;
+            } else if (leaf.operator === 'AGE_YOUNGER_THAN') {
+              const N = Number(leaf.value?.value || 18);
+              const val = Number(state.simValues[leaf.questionId] || Math.max(1, N - 2));
+              html += `
+                <div class="sim-box sim-box--eligibility">
+                  <div>
+                    <span class="sim-label">Screen ${pageNum} Eligibility Gate: "${qPrompt}" (Age &lt; ${N})</span>
+                    <div class="sim-input-inline">
+                      <button type="button" class="sim-preset-btn ${val < N ? 'is-active' : ''}" data-q-id="${leaf.questionId}" data-val="${Math.max(1, N - 2)}">
+                        ✓ Age ${Math.max(1, N - 2)} (&lt; ${N} yrs — Eligible)
+                      </button>
+                      <button type="button" class="sim-preset-btn ${val >= N ? 'is-stop-active' : ''}" data-q-id="${leaf.questionId}" data-val="${N + 2}">
+                        ⛔ Age ${N + 2} (&ge; ${N} yrs — Stops User)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            } else {
+              const N = Number(leaf.value?.value || 0);
+              const val = Number(state.simValues[leaf.questionId] || N + 5);
+              html += `
+                <div class="sim-box sim-box--eligibility">
+                  <div>
+                    <span class="sim-label">Screen ${pageNum} Eligibility Gate: "${qPrompt}" (Age &gt; ${N})</span>
+                    <div class="sim-input-inline">
+                      <button type="button" class="sim-preset-btn ${val > N ? 'is-active' : ''}" data-q-id="${leaf.questionId}" data-val="${N + 6}">
+                        ✓ Age ${N + 6} (&gt; ${N} yrs — Eligible)
+                      </button>
+                      <button type="button" class="sim-preset-btn ${val <= N ? 'is-stop-active' : ''}" data-q-id="${leaf.questionId}" data-val="${Math.max(18, N - 5)}">
+                        ⛔ Age ${Math.max(18, N - 5)} (&le; ${N} yrs — Stops User)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
           }
         });
 
@@ -715,9 +875,16 @@
         if (node.operator === 'EQUAL_TO') return userCents === targetCents;
       }
 
-      if (node.scalar === 'DATE' && node.operator === 'AGE_OLDER_THAN') {
+      if (node.scalar === 'DATE' && (node.operator === 'AGE_OLDER_THAN' || node.operator === 'AGE_YOUNGER_THAN' || node.operator === 'AGE_BETWEEN')) {
         const age = Number(userVal);
+        if (node.operator === 'AGE_BETWEEN') {
+          const nums = (String(node.value?.value || '').match(/\d+/g) || []).map(Number);
+          const minAge = nums[0] ?? 14;
+          const maxAge = nums[1] ?? 21;
+          return age >= minAge && age <= maxAge;
+        }
         const targetAge = Number(node.value?.value || 0);
+        if (node.operator === 'AGE_YOUNGER_THAN') return age < targetAge;
         return age > targetAge;
       }
 
@@ -993,14 +1160,28 @@
         if (isHidden) {
           itemCls += ' outline-item--hidden';
           badgeHTML = `<span class="outline-item__tag outline-item__tag--hidden">Hidden</span>`;
-        } else if (isStop || hasEligibility) {
-          badgeHTML = `<span class="outline-item__tag outline-item__tag--stop">E</span>`;
-        } else if (hasVisibilityPred) {
-          itemCls += ' outline-item--visibility';
-          badgeHTML = `<span class="outline-item__tag outline-item__tag--visibility">V</span>`;
-        } else if (isRepeatedPage) {
-          itemCls += ' outline-item--loop';
-          badgeHTML = `<span class="outline-item__tag outline-item__tag--loop">N</span>`;
+        } else {
+          if (isRepeatedPage) {
+            itemCls += ' outline-item--loop';
+          } else if (hasVisibilityPred) {
+            itemCls += ' outline-item--visibility';
+          }
+
+          const badges = [];
+          if (isStop || hasEligibility) {
+            badges.push(`<span class="outline-item__tag outline-item__tag--stop">E</span>`);
+          }
+          if (hasVisibilityPred) {
+            badges.push(`<span class="outline-item__tag outline-item__tag--visibility">V</span>`);
+          }
+          if (isRepeatedPage) {
+            badges.push(`<span class="outline-item__tag outline-item__tag--loop">N</span>`);
+          }
+          if (badges.length === 1) {
+            badgeHTML = badges[0];
+          } else if (badges.length > 1) {
+            badgeHTML = `<span style="display: inline-flex; align-items: center; gap: 0.25rem; flex-shrink: 0;">${badges.join('')}</span>`;
+          }
         }
 
         html += `
@@ -1082,7 +1263,7 @@
           const rootIsCompound = Array.isArray(rootNode.children) && rootNode.children.length > 0;
 
           if (rootIsCompound) {
-            const predFormatted = formatPredicateNode(rootNode, questionsMap, invertPred, true);
+            const predFormatted = formatPredicateNode(rootNode, questionsMap, invertPred, true, '', false);
             const isAndAtRoot = (rootNode.type === 'and' ? !invertPred : invertPred);
             let matchPhrase = 'Screen displays when conditions match:';
             if (!isAndAtRoot) {
@@ -1098,14 +1279,14 @@
                 <div style="margin-bottom: 0.15rem;">
                   <span class="status-badge-tag--visibility">${tagText}</span>
                 </div>
-                <div style="font-size: 0.8rem; color: #1f2937; margin-bottom: 0.25rem;">
+                <div style="font-size: 0.8rem; color: rgb(27, 27, 27); margin-bottom: 0.25rem;">
                   ${matchPhrase}
                 </div>
                 ${predFormatted}
               </div>
             `;
           } else {
-            const predFormatted = formatPredicateNode(rootNode, questionsMap, invertPred, true, 'Visible when ');
+            const predFormatted = formatPredicateNode(rootNode, questionsMap, invertPred, true, 'Visible when ', false);
             topBannerHTML = `
               <div class="screen-predicate-banner--visibility-top">
                 <div style="margin-bottom: 0.15rem;">
@@ -1194,23 +1375,11 @@
         const opts = getQuestionOptions(q);
         if (opts.length > 0) {
           const optionPills = opts.map(opt => {
-            let pillCls = 'option-pill-item';
-            if (isEligibilityQuestion && eligInfo && eligInfo.allowedOptionIds) {
-              if (eligInfo.allowedOptionIds.includes(String(opt.id)) || eligInfo.allowedOptionIds.includes(String(opt.adminName))) {
-                pillCls += ' option-pill-item--eligible';
-              } else {
-                pillCls += ' option-pill-item--ineligible';
-              }
-            }
-            const prefix = isEligibilityQuestion && eligInfo && eligInfo.allowedOptionIds
-              ? ((eligInfo.allowedOptionIds.includes(String(opt.id)) || eligInfo.allowedOptionIds.includes(String(opt.adminName))) ? '✓ Eligible: ' : 'Stops User: ')
-              : '';
-            return `<span class="${pillCls}">${prefix}${getTranslation(opt.localizedOptionText)}</span>`;
+            return `<span class="option-pill-item">${escapeHtml(getTranslation(opt.localizedOptionText))}</span>`;
           }).join('');
 
-          const openAttr = isEligibilityQuestion ? 'open' : '';
           optionsDetailsHTML = `
-            <details class="question-options-details" ${openAttr}>
+            <details class="question-options-details">
               <summary>${opts.length} answer options (${q.multiOptionQuestionType || 'SELECT'})</summary>
               <div class="question-options-pills">${optionPills}</div>
             </details>
@@ -1225,11 +1394,11 @@
         const metaHTML = hasMeta ? `
             <div class="question-chip__top">
               <div class="question-chip__meta">
+                ${isEligibilityQuestion ? `<span class="q-eligibility-pill">CONTROLS ELIGIBILITY</span>` : ''}
+                ${isVisibilityTriggerQuestion ? `<span class="q-visibility-pill">CONTROLS VISIBILITY</span>` : ''}
                 ${isUniversalQuestion ? `<span class="q-universal-pill" title="CiviForm Universal Question">${universalIconSvg}UNIVERSAL QUESTION</span>` : ''}
                 ${isSharedQuestion ? `<span class="q-shared-pill" title="Shared question across programs">${sharedIconSvg}SHARED QUESTION</span>` : ''}
                 ${isEnumeratorQuestion ? `<span class="q-enumerator-pill">ENUMERATOR</span>` : ''}
-                ${isVisibilityTriggerQuestion ? `<span class="q-visibility-pill">CONTROLS VISIBILITY</span>` : ''}
-                ${isEligibilityQuestion ? `<span class="q-eligibility-pill">CONTROLS ELIGIBILITY</span>` : ''}
                 ${!qd.optional ? '<span class="q-badge-tag" style="background:#f4e3db;color:#b50909;">Required</span>' : ''}
               </div>
             </div>
@@ -1237,7 +1406,8 @@
 
         let eligBannerHTML = '';
         if (isEligibilityQuestion && eligInfo) {
-          const reqText = formatEligibilityRequirement(block.eligibilityDefinition?.predicate?.rootNode?.node, questionsMap);
+          const isGating = state.formData.program?.eligibilityIsGating !== false;
+          const reqText = formatEligibilityRequirement(block.eligibilityDefinition?.predicate?.rootNode?.node, questionsMap, isGating);
           eligBannerHTML = `
             <div class="screen-predicate-banner screen-predicate-banner--eligibility">
               <span>${reqText}</span>
@@ -1248,8 +1418,8 @@
         questionsHTML += `
           <div class="question-chip ${chipModClass}" id="flow-node-question-${block.id}-${qd.id}" data-question-id="${qd.id}" data-block-id="${block.id}">
             ${metaHTML}
-            <p class="question-chip__text">${qText}</p>
-            ${qHelp ? `<p class="question-chip__help">${qHelp}</p>` : ''}
+            <p class="question-chip__text">${formatCardText(qText)}</p>
+            ${qHelp ? `<p class="question-chip__help">${formatCardText(qHelp)}</p>` : ''}
             ${optionsDetailsHTML}
             ${eligBannerHTML}
           </div>
@@ -1261,8 +1431,8 @@
           ${topBannerHTML}
           <div class="screen-node__header">
             <div>
-              <h3 class="screen-node__title">${screenTitle}</h3>
-              ${screenDesc ? `<p class="screen-node__desc">${screenDesc}</p>` : ''}
+              <h3 class="screen-node__title">${formatCardText(screenTitle)}</h3>
+              ${screenDesc ? `<p class="screen-node__desc">${formatCardText(screenDesc)}</p>` : ''}
             </div>
             ${statusBadgeHTML}
           </div>
@@ -1280,31 +1450,62 @@
       const passesSim = !isBlockedUpstream && doesBlockPassEligibilityInSim(block);
       const stopsSim = !isBlockedUpstream && state.simulationEnabled && !doesBlockPassEligibilityInSim(block);
 
-      const passCardCls = state.simulationEnabled && !passesSim
-        ? 'eligibility-pass-card is-blocked'
-        : 'eligibility-pass-card';
+      const isGating = state.formData.program?.eligibilityIsGating !== false;
 
       let stopCardCls = 'eligibility-stop-card';
+      if (!isGating) stopCardCls += ' eligibility-stop-card--non-gating';
       if (stopsSim) stopCardCls += ' is-triggered-stop';
       else if (state.simulationEnabled && !stopsSim) stopCardCls += ' is-inactive-stop';
 
-      const isGating = state.formData.program?.eligibilityIsGating !== false;
-      const passExpr = state.predicateNotation === 'effective' ? eligInfo.effectivePassText : eligInfo.rawText;
-      const stopExpr = eligInfo.effectiveStopText;
       const qIdAttr = triggerQId || eligInfo.questionId || '';
+
+      const rawFallback = eligInfo.effectiveStopText ? eligInfo.effectiveStopText.replace(/^Stopped if\s*/i, '') : '';
+      const fallbackClean = String(rawFallback).replace(/<[^>]*>/g, '').trim();
+
+      const bulletItems = (eligInfo.warningResponses && eligInfo.warningResponses.length > 0)
+        ? eligInfo.warningResponses.map(r => `<li>${escapeHtml(r)}</li>`).join('')
+        : (fallbackClean ? `<li>${escapeHtml(fallbackClean)}</li>` : '');
+
+      if (!isGating) {
+        return `
+        <div class="flow-side-item eligibility-fork-row" id="elig-fork-row-${block.id}" data-elig-block="${block.id}" data-trigger-q-id="${qIdAttr}">
+          <div class="${stopCardCls}" id="elig-stop-node-${block.id}">
+            <div class="eligibility-stop-card__badge-wrapper">
+              <span class="eligibility-stop-card__badge eligibility-stop-card__badge--advisory">⚠️ ELIGIBILITY ADVISORY</span>
+            </div>
+            <p class="eligibility-stop-card__lead-text">Applicant is allowed to continue but warning is shown if:</p>
+            <ul class="eligibility-stop-card__bullet-list">
+              ${bulletItems}
+            </ul>
+          </div>
+        </div>
+      `;
+      }
+
+      let blockedNodeCls = 'terminal-node terminal-node--blocked';
+      if (stopsSim) blockedNodeCls += ' is-triggered';
+      else if (state.simulationEnabled && !stopsSim) blockedNodeCls += ' is-inactive';
+
+      const blockedNodeHtml = `
+        <div class="flow-terminal-row flow-terminal-row--side" style="margin-top: 1.8rem; display: flex; justify-content: center; width: 100%;">
+          <div class="${blockedNodeCls}" id="elig-blocked-node-${block.id}">
+            <span>Application blocked</span>
+          </div>
+        </div>
+      `;
 
       return `
         <div class="flow-side-item eligibility-fork-row" id="elig-fork-row-${block.id}" data-elig-block="${block.id}" data-trigger-q-id="${qIdAttr}">
-          <div class="${passCardCls}" id="elig-pass-node-${block.id}">
-            <span class="eligibility-pass-card__badge">✓ Eligible</span>
-            <h4 class="eligibility-pass-card__title">Proceed to Next Screen</h4>
-            <code class="eligibility-pass-card__expr">${passExpr}</code>
-          </div>
           <div class="${stopCardCls}" id="elig-stop-node-${block.id}">
-            <span class="eligibility-stop-card__badge">${isGating ? '✕ Ineligible' : '⚠️ Non-Gating Warning'}</span>
-            <h4 class="eligibility-stop-card__title">${isGating ? 'User Stopped (Does Not Match Eligibility)' : 'Eligibility Warning Shown'}</h4>
-            <code class="eligibility-stop-card__expr">${stopExpr}</code>
+            <div class="eligibility-stop-card__badge-wrapper">
+              <span class="eligibility-stop-card__badge eligibility-stop-card__badge--ineligible">✕ INELIGIBLE</span>
+            </div>
+            <p class="eligibility-stop-card__lead-text">Applicant is blocked from continuing if response is:</p>
+            <ul class="eligibility-stop-card__bullet-list">
+              ${bulletItems}
+            </ul>
           </div>
+          ${blockedNodeHtml}
         </div>
       `;
     }
@@ -1704,7 +1905,7 @@
       html += `
         <div class="flow-terminal-row">
           <div class="terminal-node ${isBlockedUpstream ? 'is-blocked' : ''}" id="flow-node-end">
-            <span>✓ Review &amp; Submit Application</span>
+            <span>✓ Review &amp; submit application</span>
           </div>
         </div>
       `;
@@ -1755,6 +1956,74 @@
       document.querySelectorAll('.flow-row__primary, .cf-intro-card, .decision-gate, .branch-row').forEach(el => {
         flowchartResizeObserver.observe(el);
       });
+    }
+
+    function normalizePredicateNode(node) {
+      if (!node) return null;
+      if (node.questionId != null || node.type === 'leaf') {
+        let valStr = '';
+        if (node.value) {
+          if (typeof node.value === 'object') {
+            valStr = `${node.value.type || ''}:${node.value.value || ''}`;
+          } else {
+            valStr = String(node.value);
+          }
+        }
+        return {
+          type: 'leaf',
+          q: String(node.questionId),
+          s: String(node.scalar || ''),
+          op: String(node.operator || ''),
+          v: valStr
+        };
+      }
+      const children = [];
+      if (Array.isArray(node.children)) {
+        node.children.forEach(c => {
+          const childNorm = normalizePredicateNode(c.node || c);
+          if (childNorm) children.push(childNorm);
+        });
+        children.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+      }
+      return {
+        type: node.type || 'operation',
+        children
+      };
+    }
+
+    function getBlockTriggerConditionKey(block) {
+      const pred = block?.hidePredicate || block?.optionalPredicate;
+      if (!pred) return null;
+      const action = pred.action || '';
+      const rootNode = pred.rootNode?.node || pred.rootNode;
+      if (!rootNode) return null;
+      const norm = normalizePredicateNode(rootNode);
+      return `${action}:${JSON.stringify(norm)}`;
+    }
+
+    function analyzeConditionalChains(blocks, classification) {
+      const infoMap = new Map();
+      blocks.forEach((block, idx) => {
+        if (!classification.sideConditionalBlockIds.has(block.id)) return;
+        const chainKey = getBlockTriggerConditionKey(block);
+
+        const prevBlock = idx > 0 ? blocks[idx - 1] : null;
+        const prevKey = prevBlock ? getBlockTriggerConditionKey(prevBlock) : null;
+        const isSamePrev = prevBlock && classification.sideConditionalBlockIds.has(prevBlock.id) && prevKey === chainKey;
+
+        const nextBlock = idx + 1 < blocks.length ? blocks[idx + 1] : null;
+        const nextKey = nextBlock ? getBlockTriggerConditionKey(nextBlock) : null;
+        const isSameNext = nextBlock && classification.sideConditionalBlockIds.has(nextBlock.id) && nextKey === chainKey;
+
+        infoMap.set(block.id, {
+          isChainStart: !isSamePrev,
+          isChainEnd: !isSameNext,
+          nextInChain: isSameNext ? nextBlock : null,
+          prevInChain: isSamePrev ? prevBlock : null,
+          chainKey
+        });
+      });
+      return infoMap;
     }
 
     function drawSvgConnectors() {
@@ -1828,12 +2097,18 @@
         } else if (edgeType === 'stop' || edgeType === 'stop-active') {
           path.setAttribute('class', edgeType === 'stop-active' ? 'flow-edge flow-edge--stop-active' : 'flow-edge flow-edge--stop');
           path.setAttribute('marker-end', 'url(#arrow-stop)');
+        } else if (edgeType === 'elig-pass' || edgeType === 'elig-pass-active') {
+          path.setAttribute('class', edgeType === 'elig-pass-active' ? 'flow-edge flow-edge--elig-pass-active' : 'flow-edge flow-edge--elig-pass');
+          path.setAttribute('marker-end', 'url(#arrow-elig-pass)');
         } else if (edgeType === 'loop') {
           path.setAttribute('class', 'flow-edge flow-edge--loop');
           path.setAttribute('marker-end', 'url(#arrow-loop)');
         } else if (edgeType === 'conditional' || edgeType === 'conditional-active') {
           path.setAttribute('class', edgeType === 'conditional-active' ? 'flow-edge flow-edge--conditional-active' : 'flow-edge flow-edge--conditional');
           path.setAttribute('marker-start', 'url(#dot-conditional)');
+          path.setAttribute('marker-end', 'url(#arrow-conditional)');
+        } else if (edgeType === 'conditional-return' || edgeType === 'conditional-return-active' || edgeType === 'conditional-step' || edgeType === 'conditional-step-active') {
+          path.setAttribute('class', (edgeType === 'conditional-return-active' || edgeType === 'conditional-step-active') ? 'flow-edge flow-edge--conditional-active' : 'flow-edge flow-edge--conditional');
           path.setAttribute('marker-end', 'url(#arrow-conditional)');
         } else if (edgeType === 'hidden') {
           path.setAttribute('class', 'flow-edge flow-edge--hidden');
@@ -1864,43 +2139,191 @@
         svg.appendChild(path);
       }
 
+      function appendOrthogonalConnector(p1, p2, edgeType = 'conditional') {
+        if (!p1 || !p2) return;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let d = '';
+
+        if (Math.abs(p1.y - p2.y) < 2) {
+          // Perfectly straight horizontal line (0 angles)
+          d = `M ${p1.x} ${p1.y} L ${p2.x} ${p1.y}`;
+        } else if (Math.abs(p1.x - p2.x) < 2) {
+          // Perfectly straight vertical line (0 angles)
+          d = `M ${p1.x} ${p1.y} L ${p1.x} ${p2.y}`;
+        } else {
+          // Minimal right angles: exit horizontally from p1, turn at midX, enter horizontally into p2 (2 right angles)
+          const midX = p1.x + (p2.x - p1.x) / 2;
+          d = `M ${p1.x} ${p1.y} L ${midX} ${p1.y} L ${midX} ${p2.y} L ${p2.x} ${p2.y}`;
+        }
+
+        path.setAttribute('d', d);
+        applyEdgeStyle(path, edgeType);
+        svg.appendChild(path);
+      }
+
+      function findNextFlowTarget(condBlock, blocks, classification) {
+        const condIdx = blocks.findIndex(b => b.id === condBlock.id);
+        const startIdx = condIdx !== -1 ? condIdx + 1 : 0;
+
+        for (let k = startIdx; k < blocks.length; k++) {
+          const b = blocks[k];
+          if (classification.sideConditionalBlockIds.has(b.id)) {
+            continue;
+          }
+          if (classification.parallelGroupsByFirstBlockId.has(b.id)) {
+            const gate = document.getElementById(`flow-node-gate-${b.id}`);
+            if (gate) return gate;
+          }
+          const screen = document.getElementById(`flow-node-screen-${b.id}`);
+          if (screen) return screen;
+        }
+        return document.getElementById('flow-node-end');
+      }
+
+      function appendConditionalReturnConnector(startPoint, condCoords, nextCoords, targetDomId, edgeType, returnCounts) {
+        if (!startPoint || !condCoords || !nextCoords) return;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+        const returnIdx = returnCounts.get(targetDomId) || 0;
+        returnCounts.set(targetDomId, returnIdx + 1);
+
+        let d = '';
+        const x1 = startPoint.x;
+        const y1 = startPoint.y;
+
+        if (condCoords.left >= nextCoords.right + 10) {
+          // Standard side-by-side: conditional card in right column, next node on the left primary spine
+          const x2 = nextCoords.right;
+          let targetY;
+          if (y1 < nextCoords.top) {
+            targetY = Math.min(nextCoords.bottom - 16, nextCoords.top + Math.min(36, nextCoords.height * 0.4) + returnIdx * 18);
+          } else if (y1 < nextCoords.bottom - 24) {
+            targetY = Math.min(nextCoords.bottom - 16, y1 + 22 + returnIdx * 18);
+          } else {
+            targetY = Math.min(nextCoords.bottom - 16, nextCoords.top + 36 + returnIdx * 18);
+          }
+
+          if (y1 <= targetY) {
+            // 1 single right angle: down from conditional card bottom along x1, then straight left into right edge of next screen
+            d = `M ${x1} ${y1} L ${x1} ${targetY} L ${x2} ${targetY}`;
+          } else {
+            // If conditional card extends below nextTarget: drop down slightly, turn left, turn up into bottom of next screen
+            const yUnder = y1 + 18 + returnIdx * 12;
+            const xMid = Math.max(nextCoords.leftCenter.x, x2 - 24);
+            d = `M ${x1} ${y1} L ${x1} ${yUnder} L ${xMid} ${yUnder} L ${xMid} ${nextCoords.bottom}`;
+          }
+        } else if (condCoords.right <= nextCoords.left - 10) {
+          // Inverse layout
+          const x2 = nextCoords.left;
+          const targetY = Math.min(nextCoords.bottom - 16, Math.max(y1 + 20, nextCoords.top + 32 + returnIdx * 18));
+          d = `M ${x1} ${y1} L ${x1} ${targetY} L ${x2} ${targetY}`;
+        } else {
+          // Stacked layout (e.g. mobile)
+          const x2 = nextCoords.topCenter.x;
+          const y2 = nextCoords.top;
+          if (Math.abs(x1 - x2) < 2) {
+            d = `M ${x1} ${y1} L ${x1} ${y2}`;
+          } else if (y2 > y1 + 10) {
+            const midY = (y1 + y2) / 2;
+            d = `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+          } else {
+            d = `M ${x1} ${y1} L ${x2} ${y2}`;
+          }
+        }
+
+        path.setAttribute('d', d);
+        applyEdgeStyle(path, edgeType);
+        svg.appendChild(path);
+      }
+
       function drawBlockEligibilityConnectors(bObj, screenCoords, isVisible, isBlocked) {
         if (!bObj.eligibilityDefinition || !screenCoords) return;
-        const passEl = getCoords(document.getElementById(`elig-pass-node-${bObj.id}`));
         const stopEl = getCoords(document.getElementById(`elig-stop-node-${bObj.id}`));
-        if (!passEl || !stopEl) return;
+        if (!stopEl) return;
 
+        const isGating = state.formData.program?.eligibilityIsGating !== false;
         const passes = !isBlocked && isVisible && doesBlockPassEligibilityInSim(bObj);
         const stops = !isBlocked && isVisible && state.simulationEnabled && !doesBlockPassEligibilityInSim(bObj);
-        const passEdge = !state.simulationEnabled ? 'default' : (passes ? 'active' : 'hidden');
-        const stopEdge = !state.simulationEnabled ? 'stop' : (stops ? 'stop-active' : 'hidden');
+
+        // Incoming connector: red dotted line if gating, blue dotted line if non-gating
+        let inEdge;
+        if (isGating) {
+          inEdge = !state.simulationEnabled ? 'stop' : (stops ? 'stop-active' : 'hidden');
+        } else {
+          inEdge = !state.simulationEnabled ? 'conditional' : (stops ? 'conditional-active' : 'hidden');
+        }
 
         const eligLeaves = collectLeafNodes(bObj.eligibilityDefinition?.predicate?.rootNode?.node);
         const eligQIds = Array.from(new Set(eligLeaves.map(l => l.questionId != null ? String(l.questionId) : null).filter(Boolean)));
 
-        if (passEl.leftCenter.x > screenCoords.rightCenter.x + 10) {
-          // Side-by-side layout: connect from eligibility question chip(s) on the left to Pass / Stop cards on the right
+        if (stopEl.leftCenter.x > screenCoords.rightCenter.x + 10) {
+          // Side-by-side layout: connect from eligibility question chip(s) on the left to eligibility card on the right
           let connectedFromQuestion = false;
           eligQIds.forEach(qId => {
             const qDom = document.getElementById(`flow-node-question-${bObj.id}-${qId}`);
             const qCoords = getCoords(qDom);
             if (qCoords) {
               connectedFromQuestion = true;
-              appendHorizontalCurve(qCoords.rightCenter, passEl.leftCenter, passEdge);
-              appendHorizontalCurve(qCoords.rightCenter, stopEl.leftCenter, stopEdge);
+              const yStart = qCoords.rightCenter.y;
+              let yTarget;
+              if (yStart >= stopEl.top + 14 && yStart <= stopEl.bottom - 14) {
+                // Straight horizontal line (0 angles)
+                yTarget = yStart;
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${qCoords.right} ${yStart} L ${stopEl.left} ${yTarget}`);
+                applyEdgeStyle(path, inEdge);
+                svg.appendChild(path);
+              } else {
+                appendOrthogonalConnector({ x: qCoords.right, y: yStart }, stopEl.leftCenter, inEdge);
+              }
             }
           });
           if (!connectedFromQuestion) {
-            appendHorizontalCurve(screenCoords.rightCenter, passEl.leftCenter, passEdge);
-            appendHorizontalCurve(screenCoords.rightCenter, stopEl.leftCenter, stopEdge);
+            appendOrthogonalConnector(screenCoords.rightCenter, stopEl.leftCenter, inEdge);
           }
         } else {
-          // Stacked fallback (e.g. narrow screens or inside a parallel branch column)
-          appendCurve(screenCoords.bottomCenter, passEl.topCenter, passEdge);
-          appendCurve(screenCoords.bottomCenter, stopEl.topCenter, stopEdge);
+          // Stacked fallback
+          appendOrthogonalConnector(screenCoords.bottomCenter, stopEl.topCenter, inEdge);
+        }
+
+        // Outgoing connector from bottom of eligibility card
+        if (isGating) {
+          // Fully gated: red dotted line coming out of the bottom to pill-shaped "Application blocked" node
+          const blockedEl = getCoords(document.getElementById(`elig-blocked-node-${bObj.id}`));
+          if (blockedEl) {
+            const outEdge = !state.simulationEnabled ? 'stop' : (stops ? 'stop-active' : 'hidden');
+            const x1 = stopEl.bottomCenter.x;
+            const y1 = stopEl.bottomCenter.y;
+            const x2 = blockedEl.topCenter.x;
+            const y2 = blockedEl.topCenter.y;
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d;
+            if (Math.abs(x1 - x2) < 2) {
+              d = `M ${x1} ${y1} L ${x1} ${y2}`;
+            } else {
+              const midY = (y1 + y2) / 2;
+              d = `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+            }
+            path.setAttribute('d', d);
+            applyEdgeStyle(path, outEdge);
+            svg.appendChild(path);
+          }
+        } else {
+          // Non-gating warning: blue dotted line coming out of the bottom connecting to the next screen
+          const nextTargetDom = findNextFlowTarget(bObj, blocks, classification);
+          if (nextTargetDom) {
+            const nextCoords = getCoords(nextTargetDom);
+            if (nextCoords) {
+              const returnEdgeType = !state.simulationEnabled
+                ? 'conditional-return'
+                : (stops ? 'conditional-return-active' : 'hidden');
+              appendConditionalReturnConnector(stopEl.bottomCenter, stopEl, nextCoords, nextTargetDom.id, returnEdgeType, returnCounts);
+            }
+          }
         }
       }
 
+      const returnCounts = new Map();
       const startEl = getCoords(document.getElementById('flow-node-start'));
       const endEl = getCoords(document.getElementById('flow-node-end'));
       const blocks = state.formData.program?.blockDefinitions || [];
@@ -1908,6 +2331,7 @@
 
       const questionsMap = getQuestionsMap();
       const classification = classifyProgramBlocks(blocks, questionsMap);
+      const chainInfoMap = analyzeConditionalChains(blocks, classification);
 
       let prevAnchors = [];
       let prevEdges = [];
@@ -1958,15 +2382,9 @@
 
               if (bBlock.eligibilityDefinition) {
                 drawBlockEligibilityConnectors(bBlock, bScreenEl, isBVisible, blockedSoFar);
-                const passEl = getCoords(document.getElementById(`elig-pass-node-${bBlock.id}`));
                 const passes = !blockedSoFar && isBVisible && doesBlockPassEligibilityInSim(bBlock);
-                if (passEl && passEl.leftCenter.x <= bScreenEl.rightCenter.x + 10) {
-                  nextAnchors.push(passEl.bottomCenter);
-                  nextEdges.push(!state.simulationEnabled ? 'default' : (passes ? 'active' : 'hidden'));
-                } else {
-                  nextAnchors.push(bScreenEl.bottomCenter);
-                  nextEdges.push(!state.simulationEnabled ? 'default' : (passes ? 'active' : 'hidden'));
-                }
+                nextAnchors.push(bScreenEl.bottomCenter);
+                nextEdges.push(!state.simulationEnabled ? 'default' : (passes ? 'active' : 'hidden'));
               } else {
                 nextAnchors.push(bScreenEl.bottomCenter);
                 nextEdges.push(bEdge);
@@ -1985,7 +2403,7 @@
         const screenEl = getCoords(document.getElementById(`flow-node-screen-${block.id}`));
         if (screenEl) {
           const isVisible = isBlockVisibleInSim(block);
-          const edge = blockedSoFar ? 'hidden' : (!isVisible && state.simulationEnabled ? 'hidden' : (block.repeaterId ? 'loop' : (state.simulationEnabled ? 'active' : 'default')));
+          const edge = blockedSoFar ? 'hidden' : (!isVisible && state.simulationEnabled ? 'hidden' : (state.simulationEnabled ? 'active' : 'default'));
 
           prevAnchors.forEach((anc, aIdx) => {
             appendCurve(anc, screenEl.topCenter, prevEdges[aIdx] || edge);
@@ -2011,9 +2429,14 @@
         appendCurve(anc, endEl.topCenter, prevEdges[aIdx] || (blockedSoFar ? 'hidden' : 'default'));
       });
 
-      // Draw dark gold dotted connectors from trigger questions to side conditional screens
+      // 1. Group all chain-start conditional targets by trigger question chip
+      const branchTargetsByQDom = new Map();
+
       blocks.forEach(condBlock => {
         if (!classification.sideConditionalBlockIds.has(condBlock.id)) return;
+        const chainInfo = chainInfoMap.get(condBlock.id);
+        if (!chainInfo || !chainInfo.isChainStart) return;
+
         const condEl = getCoords(document.getElementById(`flow-node-screen-${condBlock.id}`));
         if (!condEl) return;
 
@@ -2025,33 +2448,273 @@
         const condLeaves = collectLeafNodes((condBlock.hidePredicate || condBlock.optionalPredicate)?.rootNode?.node);
         const triggerQIds = Array.from(new Set(condLeaves.map(l => l.questionId != null ? String(l.questionId) : null).filter(Boolean)));
 
-        triggerQIds.forEach((qId, qIdx) => {
+        triggerQIds.forEach(qId => {
           const qDom = document.querySelector(`.question-chip[data-question-id="${CSS.escape(String(qId))}"]`);
-          const qCoords = getCoords(qDom);
-          if (!qCoords) return;
+          if (!qDom) return;
+          if (!branchTargetsByQDom.has(qDom)) {
+            branchTargetsByQDom.set(qDom, []);
+          }
+          branchTargetsByQDom.get(qDom).push({
+            condBlock,
+            condEl,
+            isCondVisible,
+            condEdgeType
+          });
+        });
+      });
 
-          const targetY = Math.min(condEl.bottom - 16, condEl.top + 36 + qIdx * 18);
+      branchTargetsByQDom.forEach((targetList, qDom) => {
+        const qCoords = getCoords(qDom);
+        if (!qCoords) return;
+
+        targetList.sort((a, b) => a.condEl.top - b.condEl.top);
+        const N = targetList.length;
+
+        targetList.forEach((target, k) => {
+          const { condEl, condEdgeType } = target;
 
           if (condEl.left > qCoords.right + 10) {
-            appendHorizontalCurve(qCoords.rightCenter, { x: condEl.left, y: targetY }, condEdgeType);
+            let exitY;
+            if (N === 1) {
+              exitY = qCoords.rightCenter.y;
+            } else {
+              exitY = qCoords.top + (k + 1) * (qCoords.height) / (N + 1);
+            }
+
+            let targetY;
+            if (N === 1 && Math.abs(exitY - condEl.topCenter.y) < 10) {
+              targetY = exitY;
+            } else if (exitY >= condEl.top + 16 && exitY <= condEl.bottom - 16) {
+              targetY = exitY;
+            } else {
+              targetY = Math.max(condEl.top + 24, Math.min(condEl.bottom - 24, condEl.top + 36));
+            }
+
+            const p1 = { x: qCoords.right, y: exitY };
+            const p2 = { x: condEl.left, y: targetY };
+
+            if (Math.abs(p1.y - p2.y) < 2) {
+              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              path.setAttribute('d', `M ${p1.x} ${p1.y} L ${p2.x} ${p1.y}`);
+              applyEdgeStyle(path, condEdgeType);
+              svg.appendChild(path);
+            } else {
+              const gap = condEl.left - qCoords.right;
+              const stepMidX = Math.min(16, Math.max(8, gap / (N + 2)));
+              const midX = qCoords.right + gap / 2 + (k - (N - 1) / 2) * stepMidX;
+
+              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              path.setAttribute('d', `M ${p1.x} ${p1.y} L ${midX} ${p1.y} L ${midX} ${p2.y} L ${p2.x} ${p2.y}`);
+              applyEdgeStyle(path, condEdgeType);
+              svg.appendChild(path);
+            }
           } else if (Math.abs(condEl.left - qCoords.left) < 40) {
-            // Chained conditional page in the same right column: curve around the right side
+            const exitY = N === 1 ? qCoords.rightCenter.y : (qCoords.top + (k + 1) * (qCoords.height) / (N + 1));
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            const p1 = qCoords.rightCenter;
-            const p2 = { x: condEl.right, y: targetY };
-            const d = `M ${p1.x} ${p1.y} C ${p1.x + 44} ${p1.y}, ${p2.x + 44} ${p2.y}, ${p2.x} ${p2.y}`;
+            const branchX = Math.max(qCoords.right, condEl.right) + 24 + k * 14;
+            const targetY = Math.min(condEl.bottom - 18, Math.max(condEl.top + 24, condEl.top + 36));
+            const d = `M ${qCoords.right} ${exitY} L ${branchX} ${exitY} L ${branchX} ${targetY} L ${condEl.right} ${targetY}`;
             path.setAttribute('d', d);
             applyEdgeStyle(path, condEdgeType);
             svg.appendChild(path);
           } else {
-            appendCurve(qCoords.bottomCenter, condEl.topCenter, condEdgeType);
+            appendOrthogonalConnector(qCoords.bottomCenter, condEl.topCenter, condEdgeType);
           }
         });
+      });
 
+      // Eligibility connectors on conditional blocks
+      blocks.forEach(condBlock => {
+        if (!classification.sideConditionalBlockIds.has(condBlock.id)) return;
+        const condEl = getCoords(document.getElementById(`flow-node-screen-${condBlock.id}`));
+        if (!condEl) return;
+        const isCondVisible = isBlockVisibleInSim(condBlock);
         if (condBlock.eligibilityDefinition) {
           drawBlockEligibilityConnectors(condBlock, condEl, isCondVisible, false);
         }
       });
+
+      // 2. Intra-chain vertical dotted connectors for consecutive conditional screens sharing same trigger condition
+      blocks.forEach(condBlock => {
+        if (!classification.sideConditionalBlockIds.has(condBlock.id)) return;
+        const chainInfo = chainInfoMap.get(condBlock.id);
+        if (!chainInfo || chainInfo.isChainEnd || !chainInfo.nextInChain) return;
+
+        const nextBlock = chainInfo.nextInChain;
+        const condEl = getCoords(document.getElementById(`flow-node-screen-${condBlock.id}`));
+        const nextEl = getCoords(document.getElementById(`flow-node-screen-${nextBlock.id}`));
+        if (!condEl || !nextEl) return;
+
+        const isFromVisible = isBlockVisibleInSim(condBlock);
+        const isToVisible = isBlockVisibleInSim(nextBlock);
+        const fromPasses = doesBlockPassEligibilityInSim(condBlock);
+
+        const stepEdgeType = !state.simulationEnabled
+          ? 'conditional-step'
+          : (isFromVisible && isToVisible && fromPasses ? 'conditional-step-active' : 'hidden');
+
+        let startPoint = condEl.bottomCenter;
+        const stopDom = document.getElementById(`elig-stop-node-${condBlock.id}`);
+        if (stopDom) {
+          const stopCoords = getCoords(stopDom);
+          if (stopCoords && stopCoords.bottom > condEl.bottom) {
+            startPoint = stopCoords.bottomCenter;
+          }
+        }
+        const blockedDom = document.getElementById(`elig-blocked-node-${condBlock.id}`);
+        if (blockedDom) {
+          const blockedCoords = getCoords(blockedDom);
+          if (blockedCoords && blockedCoords.bottom > condEl.bottom) {
+            startPoint = blockedCoords.bottomCenter;
+          }
+        }
+
+        const endPoint = nextEl.topCenter;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let d;
+        if (Math.abs(startPoint.x - endPoint.x) < 4) {
+          d = `M ${startPoint.x} ${startPoint.y} L ${startPoint.x} ${endPoint.y}`;
+        } else {
+          const midY = (startPoint.y + endPoint.y) / 2;
+          d = `M ${startPoint.x} ${startPoint.y} L ${startPoint.x} ${midY} L ${endPoint.x} ${midY} L ${endPoint.x} ${endPoint.y}`;
+        }
+        path.setAttribute('d', d);
+        applyEdgeStyle(path, stepEdgeType);
+        svg.appendChild(path);
+      });
+
+      // 3. Return connectors from the end of conditional chains back to the next sequential screen in the workflow
+      let maxBusX = (vpRect.width / scale);
+      const returnGroupsByTargetId = new Map();
+
+      blocks.forEach(condBlock => {
+        if (!classification.sideConditionalBlockIds.has(condBlock.id)) return;
+        const chainInfo = chainInfoMap.get(condBlock.id);
+        if (!chainInfo || !chainInfo.isChainEnd) return; // Only chain end returns to primary flow!
+
+        const condEl = getCoords(document.getElementById(`flow-node-screen-${condBlock.id}`));
+        if (!condEl) return;
+
+        const nextTargetDom = findNextFlowTarget(condBlock, blocks, classification);
+        if (!nextTargetDom) return;
+        const nextCoords = getCoords(nextTargetDom);
+        if (!nextCoords) return;
+
+        const targetDomId = nextTargetDom.id;
+        if (!returnGroupsByTargetId.has(targetDomId)) {
+          returnGroupsByTargetId.set(targetDomId, {
+            nextTargetDom,
+            nextCoords,
+            entries: []
+          });
+        }
+        returnGroupsByTargetId.get(targetDomId).entries.push({
+          block: condBlock,
+          coords: condEl
+        });
+      });
+
+      returnGroupsByTargetId.forEach(({ nextTargetDom, nextCoords, entries }) => {
+        if (entries.length === 0) return;
+
+        entries.sort((a, b) => a.coords.top - b.coords.top);
+        const total = entries.length;
+
+        if (total === 1) {
+          const entry = entries[0];
+          const condEl = entry.coords;
+          const isCondVisible = isBlockVisibleInSim(entry.block);
+          const returnEdgeType = !state.simulationEnabled
+            ? 'conditional-return'
+            : (isCondVisible ? 'conditional-return-active' : 'hidden');
+
+          let startPoint = condEl.bottomCenter;
+          const stopDom = document.getElementById(`elig-stop-node-${entry.block.id}`);
+          if (stopDom) {
+            const stopCoords = getCoords(stopDom);
+            if (stopCoords && stopCoords.bottom > condEl.bottom) {
+              startPoint = stopCoords.bottomCenter;
+            }
+          }
+          const blockedDom = document.getElementById(`elig-blocked-node-${entry.block.id}`);
+          if (blockedDom) {
+            const blockedCoords = getCoords(blockedDom);
+            if (blockedCoords && blockedCoords.bottom > condEl.bottom) {
+              startPoint = blockedCoords.bottomCenter;
+            }
+          }
+
+          appendConditionalReturnConnector(startPoint, condEl, nextCoords, nextTargetDom.id, returnEdgeType, returnCounts);
+        } else {
+          // Multiple conditional screens returning to the same target:
+          let maxBottom = 0;
+          let centerSum = 0;
+          entries.forEach(item => {
+            let b = item.coords.bottom;
+            const stopDom = document.getElementById(`elig-stop-node-${item.block.id}`);
+            if (stopDom) {
+              const stopCoords = getCoords(stopDom);
+              if (stopCoords) b = Math.max(b, stopCoords.bottom);
+            }
+            const blockedDom = document.getElementById(`elig-blocked-node-${item.block.id}`);
+            if (blockedDom) {
+              const blockedCoords = getCoords(blockedDom);
+              if (blockedCoords) b = Math.max(b, blockedCoords.bottom);
+            }
+            if (b > maxBottom) maxBottom = b;
+            centerSum += item.coords.bottomCenter.x;
+          });
+          const avgCenterX = centerSum / total;
+
+          const availH = Math.max(24, nextCoords.bottom - nextCoords.top - 20);
+          const stepY = Math.min(18, Math.max(8, availH / Math.max(1, total - 1)));
+          const baseTargetY = Math.min(
+            nextCoords.bottom - 12 - (total - 1) * stepY,
+            Math.max(maxBottom + 16, nextCoords.top + 20)
+          );
+
+          const stepX = 26;
+
+          entries.forEach((item, k) => {
+            const condEl = item.coords;
+            const isCondVisible = isBlockVisibleInSim(item.block);
+            const returnEdgeType = !state.simulationEnabled
+              ? 'conditional-return'
+              : (isCondVisible ? 'conditional-return-active' : 'hidden');
+
+            let yStart = condEl.bottom;
+            const stopDom = document.getElementById(`elig-stop-node-${item.block.id}`);
+            if (stopDom) {
+              const stopCoords = getCoords(stopDom);
+              if (stopCoords && stopCoords.bottom > yStart) {
+                yStart = stopCoords.bottom;
+              }
+            }
+            const blockedDom = document.getElementById(`elig-blocked-node-${item.block.id}`);
+            if (blockedDom) {
+              const blockedCoords = getCoords(blockedDom);
+              if (blockedCoords && blockedCoords.bottom > yStart) {
+                yStart = blockedCoords.bottom;
+              }
+            }
+
+            const offsetX = (k - (total - 1) / 2) * stepX;
+            const lineX = avgCenterX + offsetX;
+            maxBusX = Math.max(maxBusX, lineX);
+            const targetY = baseTargetY + k * stepY;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const d = `M ${lineX} ${yStart} L ${lineX} ${targetY} L ${nextCoords.right} ${targetY}`;
+            path.setAttribute('d', d);
+            applyEdgeStyle(path, returnEdgeType);
+            svg.appendChild(path);
+          });
+        }
+      });
+
+      if (maxBusX + 30 > svgW) {
+        svg.setAttribute('width', String(Math.ceil(maxBusX + 30)));
+      }
     }
 
     function updateStickyOffsets() {
